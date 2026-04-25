@@ -1,0 +1,67 @@
+url: https://alvesks.github.io/windcut/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  light-switch: true
+
+home:
+  title: windcut
+  description: Weather time series feature engineering for plant disease epidemiology
+
+navbar:
+  structure:
+    left: [home, articles, reference, newslink]
+    right: [search, github, lightswitch]
+  components:
+    newslink:
+      text: News
+      href: news/index.html
+
+reference:
+  - title: Core window workflow
+    contents:
+      - validate_weather_data
+      - aggregate_weather_daily
+      - count_ge
+      - make_windows
+      - plot_window_pane
+      - summarise_weather_window
+      - scan_windows
+      - window_pane
+      - screen_window_features
+      - screen_feature_correlations
+  - title: Simulation
+    contents:
+      - example_weather_data
+      - window_pane_demo_data
+      - fda_demo_data
+      - simulate_weather_series
+      - simulate_assessment_data
+  - title: Functional data analysis
+    contents:
+      - run_fda_analysis
+      - plot_fda_means
+      - plot_fda_difference
+      - plot_fda_p_values
+      - plot_fda_intervals
+      - fit_fda_group_model
+      - extract_fda_features
+      - make_functional_matrix
+      - functional_group_summary
+      - plot_functional_means
+      - plot_functional_difference
+      - functional_on_scalar
+      - plot_functional_on_scalar
+      - functional_interval_test
+      - extract_interval_features
+
+articles:
+  - title: Tutorials
+    navbar: Tutorials
+    contents:
+      - getting-started
+      - daily-weather-aggregation
+      - window-pane-workflow
+      - feature-screening
+      - functional-data-analysis

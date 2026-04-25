@@ -1,0 +1,11 @@
+.Rhistory
+.RData
+.Ruserdata
+.cache/
+.pkgdown-assets/
+.r-library/
+windcut.Rcheck/
+*.tar.gz
+teststhat/
+vignettes/*.knit.md
+vignettes/pandoc*.html

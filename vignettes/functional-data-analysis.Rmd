@@ -1,0 +1,295 @@
+---
+title: "Functional Data Analysis for Weather Series"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Functional Data Analysis for Weather Series}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[UTF-8]{inputenc}
+---
+
+Run this setup first. It loads `windcut`, the small tidyverse pieces used for
+displaying tables, and `cowplot` for the plot theme. It also keeps chunk
+messages out of the rendered tutorial.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 4.8,
+  dev.args = list(bg = "white"),
+  fig.alt = "ggplot2 chart from the functional data analysis workflow."
+)
+```
+
+```{r packages, message=FALSE, warning=FALSE}
+library(windcut)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+```
+
+# Why FDA in `windcut`?
+
+Window-pane analysis asks which summary windows are informative. Functional data
+analysis asks whether the full weather trajectory differs between disease
+classes and, if so, where along the time axis that difference appears.
+
+This vignette is inspired by the functional data analysis and feature
+engineering strategy described by Alves et al. (2025). The package workflow is
+more general than the analysis in that paper: the user chooses the weather
+variables, smoothing method, p-value threshold, and number of permutations.
+
+The main user-facing function is `run_fda_analysis()`. It does the repetitive
+work that users should not have to code by hand: building subject-by-time
+matrices, computing smoothed group means, running interval-wise tests for every
+weather variable, and storing tidy outputs for plots and feature extraction.
+
+The lower-level functions are still available for advanced users, but most FDA
+workflows should start with this sequence:
+
+| Step | Function |
+|:--|:--|
+| Run the workflow | `run_fda_analysis()` |
+| Plot class mean curves | `plot_fda_means()` |
+| Plot class differences | `plot_fda_difference()` |
+| Plot corrected p-values | `plot_fda_p_values()` |
+| Plot significant intervals | `plot_fda_intervals()` |
+| Extract modeling features | `extract_fda_features()` |
+
+<div class="tutorial-note">
+<strong>Important.</strong> This vignette uses the bundled `fda_demo_data`
+dataset so the FDA workflow stays focused on analysis and interpretation.
+</div>
+
+## Step 1: Load the demo data
+
+The demo object contains daily weather series, one binary disease assessment per
+site, and display labels for the weather variables. The disease classes are
+`wm-` and `wm+`, matching the binary white mold example.
+
+```{r}
+data(fda_demo_data)
+
+weather_daily <- fda_demo_data$weather_daily
+assessments <- fda_demo_data$assessments
+variable_specs <- fda_demo_data$variable_specs
+
+knitr::kable(head(weather_daily))
+knitr::kable(head(assessments))
+knitr::kable(variable_specs)
+```
+
+The FDA functions expect the disease class to be available in the same long
+table as the weather measurements. This is ordinary data preparation: one row is
+one site at one time point.
+
+```{r}
+subject_data <- weather_daily %>%
+  left_join(assessments %>% select(site_id, wm_class), by = "site_id")
+
+knitr::kable(
+  subject_data %>%
+    select(site_id, dap, rh, rain, leaf_wetness, wm_class) %>%
+    slice_head(n = 6)
+)
+```
+
+Before running FDA, it is worth checking that both disease classes are present.
+
+```{r}
+class_counts <- assessments %>%
+  count(wm_class, name = "n_sites")
+
+knitr::kable(class_counts)
+```
+
+## Step 2: Run the FDA workflow
+
+This single call is the core of the vignette. The user tells `windcut` which
+columns identify the site, time axis, disease class, and weather variables. The
+same call also chooses the smoothing method, p-value thresholds, and number of
+permutations.
+
+```{r}
+fda_fit <- run_fda_analysis(
+  data = subject_data,
+  id_col = "site_id",
+  time_col = "dap",
+  group_col = "wm_class",
+  value_cols = variable_specs$variable,
+  value_labels = variable_specs,
+  smooth_method = "spline",
+  smooth_args = list(spar = 0.65),
+  alpha = c(0.05, 0.01),
+  n_permutations = 200
+)
+```
+
+The object stores the decisions used in the analysis and tidy interval results.
+The interval table already includes variables with no significant interval, so
+the user does not need to write special-case code for them.
+
+```{r}
+knitr::kable(fda_fit$interval_summary)
+```
+
+## Step 3: Inspect one weather variable
+
+Relative humidity is the clearest signal in this demo dataset. The mean-curve
+plot shows the smoothed average trajectory for each disease class.
+
+```{r}
+plot_fda_means(
+  fda_fit,
+  value_col = "rh",
+  xlab = "Days after planting",
+  ylab = "Mean relative humidity (%)",
+  legend_title = "White mold class",
+  palette = c("wm-" = "#2b6c4f", "wm+" = "#c47f2c")
+)
+```
+
+The difference plot shows the same comparison as `wm+` minus `wm-`. Positive
+values mean the `wm+` sites had higher relative humidity on those days.
+
+```{r}
+plot_fda_difference(
+  fda_fit,
+  value_col = "rh",
+  xlab = "Days after planting",
+  ylab = "wm+ minus wm-"
+)
+```
+
+The corrected p-value plot shows where the class difference is strongest. The
+dashed lines are the alpha thresholds chosen in `run_fda_analysis()`.
+
+```{r}
+plot_fda_p_values(
+  fda_fit,
+  value_col = "rh",
+  alpha = c(0.05, 0.01),
+  xlab = "Days after planting"
+)
+```
+
+## Step 4: Compare significant intervals across variables
+
+The interval plot summarizes the interval-wise tests for all weather variables.
+Each segment is a time period where the two disease classes differ for that
+variable. Variables with no significant interval are labeled explicitly.
+
+```{r}
+plot_fda_intervals(
+  fda_fit,
+  xlab = "Days relative to planting"
+)
+```
+
+Using two alpha values is useful because the user can see how conservative
+thresholds change the candidate periods. In this example, `alpha = 0.05` is the
+main feature-engineering threshold, while `alpha = 0.01` shows the stricter
+alternative.
+
+## Step 5: Fit a function-on-scalar model
+
+The interval-wise test is the main feature-selection tool in this workflow. A
+function-on-scalar model is a complementary view: it estimates the disease-class
+effect across the whole time axis for one weather variable. The function below
+uses the groups already stored in `fda_fit`, so the user does not need to build
+a contrast vector manually.
+
+```{r}
+rh_model <- fit_fda_group_model(
+  fda_fit,
+  value_col = "rh",
+  bs.yindex = list(bs = "ps", k = 20, m = c(2, 1)),
+  bs.int = list(bs = "ps", k = 20, m = c(2, 1))
+)
+```
+
+The coefficient plot shows the estimated disease-class effect over time. Values
+farther from zero indicate time periods where relative humidity separates the
+two disease classes more strongly.
+
+```{r}
+plot_functional_on_scalar(
+  rh_model,
+  title = "Function-on-scalar coefficient function for relative humidity",
+  xlab = "Days after planting",
+  ylab = "Coefficient function"
+)
+```
+
+## Step 6: Extract features for modeling
+
+The final step converts significant FDA intervals into ordinary site-level
+predictors. The result is a regular data frame: one row per site and one column
+per interval-derived feature. The `statistics` argument controls how each
+significant interval is summarized for each site. Here we extract the interval
+mean and maximum.
+
+```{r}
+fda_features <- extract_fda_features(
+  fda_fit,
+  alpha = 0.05,
+  prefix = "fda",
+  statistics = c("mean", "max")
+)
+
+knitr::kable(head(fda_features))
+```
+
+Those features can be joined to disease outcomes or other site-level covariates
+for downstream modeling. The plot below uses ggplot2 directly because this is a
+general modeling diagnostic, not part of the FDA algorithm itself.
+
+```{r}
+feature_name <- setdiff(names(fda_features), "site_id")[1]
+
+feature_plot_data <- fda_features %>%
+  left_join(assessments %>% select(site_id, wm_class), by = "site_id") %>%
+  transmute(site_id, wm_class, value = .data[[feature_name]])
+
+ggplot(feature_plot_data, aes(wm_class, value, fill = wm_class, color = wm_class)) +
+  geom_violin(width = 0.85, alpha = 0.22, linewidth = 0.4, show.legend = FALSE) +
+  geom_boxplot(width = 0.18, alpha = 0.6, outlier.shape = NA, linewidth = 0.5, show.legend = FALSE) +
+  geom_jitter(width = 0.08, alpha = 0.55, size = 1.7, show.legend = FALSE) +
+  scale_fill_manual(values = c("wm-" = "#2b6c4f", "wm+" = "#c47f2c")) +
+  scale_color_manual(values = c("wm-" = "#2b6c4f", "wm+" = "#c47f2c")) +
+  labs(
+    title = "Interval-derived FDA feature by binary disease class",
+    x = "White mold class",
+    y = feature_name
+  ) +
+  cowplot::theme_half_open()
+```
+
+## What the workflow gives the user
+
+The FDA workflow now keeps the repetitive coding inside the package. The user
+mainly decides which biological comparison to make:
+
+1. which site and time columns define the curves,
+2. which disease classes are compared,
+3. which weather variables are screened,
+4. which smoothing method is used,
+5. which p-value thresholds define candidate intervals.
+
+The lower-level functions remain available for users who want to customize a
+single step, but the standard workflow should require only a few package
+functions.
+
+## References
+
+Alves, K. S., Shah, D. A., Dillard, H. R., Del Ponte, E. M., and Pethybridge,
+S. J. 2025. Safer and smarter: Leveraging interpretation-guided modeling and
+data merging of disease and environmental data for plant disease risk
+prediction. *Phytopathology* 115(10):1329-1343.
+
+
+
+

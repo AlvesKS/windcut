@@ -1,0 +1,337 @@
+---
+title: "Daily Weather Aggregation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Daily Weather Aggregation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[UTF-8]{inputenc}
+---
+
+Run this setup first. It loads the package, `dplyr`, `ggplot2`, `tidyr`, and
+`cowplot`.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 4.5,
+  fig.alt = "ggplot2 chart showing daily weather aggregation."
+)
+```
+
+```{r packages, message=FALSE, warning=FALSE}
+library(windcut)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(cowplot)
+```
+
+# Why aggregate to daily data?
+
+Window-pane analysis can be done with hourly or daily data. For many plant
+disease workflows, daily data are easier to inspect and easier to explain:
+temperature can be represented by daily mean, minimum, or maximum; rainfall by
+daily total; and leaf wetness by daily wet hours or daily proportion.
+
+The important point is that the aggregation is an analysis decision. `windcut`
+does not need to hide it. Use `aggregate_weather_daily()` when your source data
+are hourly or sub-daily and you want to define the daily values before creating
+candidate windows.
+
+## Start from hourly weather
+
+The bundled window-pane demo contains both daily weather and the hourly source
+weather. The main workflow tutorials use the daily table, but this tutorial
+starts from `weather_hourly` to show how that table can be created.
+
+```{r}
+data(window_pane_demo_data)
+
+hourly_weather <- window_pane_demo_data$weather_hourly
+
+hourly_weather %>%
+  filter(site_id == site_id[1]) %>%
+  slice_head(n = 8) %>%
+  knitr::kable()
+```
+
+## Use the default daily summaries
+
+The default daily aggregation keeps the usual `windcut` weather-column names.
+Temperature and relative humidity are averaged, rainfall is summed, and
+leaf-wetness observations are summed. With hourly source data, the daily
+leaf-wetness sum can be interpreted as wet hours. The output column names always
+show the time scale, statistic, and variable, such as `daily_mean_temp` and
+`daily_sum_rain`.
+
+```{r}
+daily_weather <- aggregate_weather_daily(
+  weather = hourly_weather,
+  id_col = "site_id"
+)
+
+daily_weather %>%
+  filter(site_id == site_id[1]) %>%
+  slice_head(n = 8) %>%
+  knitr::kable()
+```
+
+The result has one row per site per day. The `time` column is placed at
+midnight so the daily table can be used directly with `make_windows()` and
+`window_pane(unit = "days")`.
+
+```{r}
+daily_weather %>%
+  count(site_id, name = "n_days") %>%
+  knitr::kable()
+```
+
+## Choose the time and date columns
+
+Many datasets have a timestamp column such as `time`, `datetime`, or
+`timestamp`. If the data do not already have a date column,
+`aggregate_weather_daily()` derives the day from `time_col` and writes it to
+`date_col`.
+
+```{r}
+timestamp_weather <- hourly_weather %>%
+  rename(timestamp = time)
+
+daily_from_timestamp <- aggregate_weather_daily(
+  weather = timestamp_weather,
+  id_col = "site_id",
+  time_col = "timestamp",
+  date_col = "weather_date"
+)
+
+daily_from_timestamp %>%
+  filter(site_id == site_id[1]) %>%
+  select(site_id, weather_date, timestamp, daily_mean_temp, daily_mean_rh, daily_sum_rain) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+Some field datasets already have both a timestamp column and a day column. In
+that case, set `date_col` to the existing day column. The function will use that
+column for grouping and still create a daily timestamp column if
+`keep_time = TRUE`.
+
+```{r}
+weather_with_day <- hourly_weather %>%
+  mutate(weather_day = as.Date(time))
+
+daily_from_existing_day <- aggregate_weather_daily(
+  weather = weather_with_day,
+  id_col = "site_id",
+  time_col = "time",
+  date_col = "weather_day"
+)
+
+daily_from_existing_day %>%
+  filter(site_id == site_id[1]) %>%
+  select(site_id, weather_day, time, daily_mean_temp, daily_mean_rh, daily_sum_rain) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+If the input is already daily and only has a date column, use
+`time_col = NULL` and `keep_time = FALSE`. This is useful when you want to
+redefine daily statistics from repeated daily records or harmonize an already
+daily table without creating a timestamp column.
+
+```{r}
+already_dated <- hourly_weather %>%
+  mutate(weather_day = as.Date(time)) %>%
+  select(site_id, weather_day, temp, rain)
+
+daily_from_date_only <- aggregate_weather_daily(
+  weather = already_dated,
+  id_col = "site_id",
+  time_col = NULL,
+  date_col = "weather_day",
+  weather_cols = c("temp", "rain"),
+  statistics = list(temp = "mean", rain = "sum"),
+  keep_time = FALSE
+)
+
+daily_from_date_only %>%
+  filter(site_id == site_id[1]) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+## Choose different daily statistics
+
+The `statistics` argument uses the same idea as the window functions. A
+character vector applies the same statistics to every selected weather
+variable. This is compact when the same summaries make sense for all variables.
+
+```{r}
+daily_many_stats <- aggregate_weather_daily(
+  weather = hourly_weather,
+  id_col = "site_id",
+  statistics = c("mean", "min", "max")
+)
+
+daily_many_stats %>%
+  filter(site_id == site_id[1]) %>%
+  select(site_id, date, time, daily_mean_temp, daily_min_temp, daily_max_temp, daily_mean_rh, daily_min_rh, daily_max_rh) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+A named list is better when each weather variable needs its own daily
+definition. In this example, temperature gets mean, minimum, and maximum;
+relative humidity gets mean and median; rainfall gets total and maximum hourly
+rainfall; and leaf wetness gets wet hours.
+
+```{r}
+daily_selected_stats <- aggregate_weather_daily(
+  weather = hourly_weather,
+  id_col = "site_id",
+  statistics = list(
+    temp = c("mean", "min", "max"),
+    rh = c("mean", "median"),
+    rain = c("sum", "max"),
+    leaf_wetness = list(wet_hours = "sum")
+  )
+)
+
+daily_selected_stats %>%
+  filter(site_id == site_id[1]) %>%
+  select(site_id, date, starts_with("daily_mean_temp"), starts_with("daily_sum_rain"), daily_wet_hours_leaf_wetness) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+## Use non-standard weather-column names
+
+Field datasets often use names such as `temp2m`, `prectot`, or `sradiation`.
+Use `weather_cols` to tell `windcut` which columns should be aggregated. The
+simplest approach is to pass the real column names and use those same names in
+`statistics`.
+
+```{r}
+custom_hourly <- hourly_weather %>%
+  rename(
+    temp2m = temp,
+    relhum = rh,
+    prectot = rain
+  ) %>%
+  mutate(sradiation = pmax(0, 600 * sin(as.numeric(format(time, "%H")) / 24 * pi)))
+
+custom_daily <- aggregate_weather_daily(
+  weather = custom_hourly,
+  id_col = "site_id",
+  weather_cols = c("temp2m", "relhum", "prectot", "sradiation"),
+  statistics = list(
+    temp2m = c("mean", "max"),
+    relhum = "mean",
+    prectot = "sum",
+    sradiation = "sum"
+  )
+)
+
+custom_daily %>%
+  filter(site_id == site_id[1]) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+If shorter output names are useful later, use a named `weather_cols` vector.
+The names on the left become the names used in `statistics` and in the output
+columns; the names on the right are the columns in the original dataset.
+
+```{r}
+custom_daily_short_names <- aggregate_weather_daily(
+  weather = custom_hourly,
+  id_col = "site_id",
+  weather_cols = c(
+    air_temp = "temp2m",
+    humidity = "relhum",
+    rain = "prectot",
+    solar = "sradiation"
+  ),
+  statistics = list(
+    air_temp = c("mean", "max"),
+    humidity = "mean",
+    rain = "sum",
+    solar = "sum"
+  )
+)
+
+custom_daily_short_names %>%
+  filter(site_id == site_id[1]) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+## Check the daily signal
+
+After aggregation, plot the daily weather before moving to window generation.
+This is a simple way to catch unit mistakes, unexpected missing periods, or
+daily statistics that do not match the biology of the disease.
+
+```{r}
+plot_daily <- daily_weather %>%
+  filter(site_id == site_id[1]) %>%
+  select(site_id, date, daily_mean_temp, daily_mean_rh, daily_sum_rain, daily_sum_leaf_wetness) %>%
+  pivot_longer(
+    cols = c(daily_mean_temp, daily_mean_rh, daily_sum_rain, daily_sum_leaf_wetness),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+ggplot(plot_daily, aes(date, value)) +
+  geom_line(color = "#3f7d58", linewidth = 0.7) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 1) +
+  labs(
+    title = "Daily weather after aggregation",
+    x = NULL,
+    y = NULL
+  ) +
+  cowplot::theme_half_open()
+```
+
+## Use the daily data in the window-pane workflow
+
+The daily table can be passed directly to `window_pane()`. Negative offsets
+create windows before the reference date, positive offsets create windows after
+the reference date, and mixed offsets create windows around the reference date.
+
+```{r}
+windows <- make_windows(
+  min_offset = -21,
+  max_offset = -1,
+  width = 5,
+  reference_col = "assessment_time"
+)
+
+features <- window_pane(
+  weather = daily_weather,
+  assessments = window_pane_demo_data$assessments,
+  windows = windows,
+  id_col = "site_id",
+  response_col = "disease_intensity",
+  weather_cols = c(
+    temp = "daily_mean_temp",
+    rh = "daily_mean_rh",
+    rain = "daily_sum_rain",
+    leaf_wetness = "daily_sum_leaf_wetness"
+  ),
+  unit = "days"
+)
+
+features %>%
+  select(1:10) %>%
+  slice_head(n = 6) %>%
+  knitr::kable()
+```
+
+This separation keeps the workflow explicit: first define what one day means,
+then define where the candidate windows sit relative to the biological
+reference date.

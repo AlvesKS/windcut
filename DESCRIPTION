@@ -1,0 +1,36 @@
+Package: windcut
+Title: Weather Time Series Feature Engineering for Plant Disease Epidemiology
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Kaique S.",
+           family = "Alves",
+           role = c("aut", "cre"),
+           email = "kaique.alves@example.com")
+Description: Tools for transforming weather time series into model-ready
+    features for plant disease epidemiology. The package emphasizes
+    relative-time window analysis, allowing users to scan candidate
+    time windows around biological reference dates and compute biologically
+    interpretable weather summaries.
+License: MIT + file LICENSE
+URL: https://github.com/AlvesKS/windcut, https://alvesks.github.io/windcut/
+BugReports: https://github.com/AlvesKS/windcut/issues
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 4.2.0)
+Imports:
+    cowplot,
+    ggplot2,
+    stats
+Suggests:
+    dplyr,
+    knitr,
+    markdown,
+    pkgdown,
+    rmarkdown,
+    tidyr,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr

@@ -1,0 +1,205 @@
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.navbar {
+  background: #2f4558;
+  border-bottom: 1px solid rgba(22, 38, 50, 0.2);
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link,
+.navbar .nav-text,
+.navbar .dropdown-toggle {
+  color: #ffffff;
+}
+
+.navbar .navbar-brand:hover,
+.navbar .nav-link:hover,
+.navbar .nav-link:focus,
+.navbar .dropdown-toggle:hover,
+.navbar .dropdown-toggle:focus {
+  color: #dce9ef;
+}
+
+.navbar .text-muted {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.navbar .form-control {
+  background: #ffffff;
+  border-color: #d3dde5;
+  color: #1f2933;
+}
+
+.navbar .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.navbar .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+.template-home .hero {
+  background: linear-gradient(135deg, #e5f3e9 0%, #f7f4e9 100%);
+  border: 1px solid #cfe2d3;
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 18px 40px rgba(67, 97, 77, 0.08);
+}
+
+.grid-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 1.5rem 0 2rem;
+}
+
+.feature-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f4f8f3 100%);
+  border: 1px solid #d7e6d9;
+  border-radius: 18px;
+  padding: 1.1rem 1rem;
+  box-shadow: 0 10px 24px rgba(67, 97, 77, 0.06);
+}
+
+.feature-card h3 {
+  color: #1e5a38;
+  margin-top: 0;
+}
+
+.markdown-body pre,
+.template-reference pre {
+  background: #f5f7f8;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.markdown-body code,
+.template-reference code {
+  color: #0b6b45;
+}
+
+.tutorial-note {
+  background: #fff8e8;
+  border-left: 5px solid #d6a319;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.article-shell {
+  max-width: 1100px;
+}
+
+.article-shell .article-frame {
+  background: #ffffff;
+  border: 1px solid #dce6dd;
+  border-radius: 22px;
+  box-shadow: 0 14px 36px rgba(46, 74, 56, 0.08);
+  padding: 1.5rem 1.75rem;
+}
+
+.article-shell .article-lead {
+  color: #4f6a57;
+  margin-bottom: 1rem;
+}
+
+.article-nav {
+  background: linear-gradient(135deg, #22543d 0%, #3f7d58 100%);
+  color: #fff;
+  padding: 0.9rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.article-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.article-nav .nav-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.visual-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin: 1.25rem 0 2rem;
+}
+
+.visual-grid img,
+.template-home img:not(.logo) {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid #d8e2da;
+  box-shadow: 0 14px 28px rgba(46, 74, 56, 0.08);
+}
+
+.template-home img.logo,
+.home-inline-logo {
+  width: 180px;
+  max-width: 180px;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+[data-bs-theme="dark"] .feature-card {
+  background: linear-gradient(180deg, #1f252d 0%, #232c26 100%);
+  border: 1px solid #31433a;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  color: #edf3ef;
+}
+
+[data-bs-theme="dark"] .feature-card h3 {
+  color: #8bd0a3;
+}
+
+[data-bs-theme="dark"] .feature-card p,
+[data-bs-theme="dark"] .feature-card li,
+[data-bs-theme="dark"] .template-home p,
+[data-bs-theme="dark"] .template-home li,
+[data-bs-theme="dark"] .template-home ol,
+[data-bs-theme="dark"] .template-home ul {
+  color: #edf3ef;
+}
+
+[data-bs-theme="dark"] .visual-grid img,
+[data-bs-theme="dark"] .template-home img:not(.logo) {
+  border: 1px solid #33443a;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .markdown-body pre,
+[data-bs-theme="dark"] .template-reference pre {
+  background: #161c22;
+  border: 1px solid #2c3842;
+}
+
+[data-bs-theme="dark"] .markdown-body code,
+[data-bs-theme="dark"] .template-reference code {
+  color: #8bd0a3;
+}
+
+[data-bs-theme="dark"] .tutorial-note {
+  background: #2d2617;
+  border-left-color: #d6a319;
+  color: #f4ead1;
+}
+
+[data-bs-theme="dark"] .article-shell .article-frame {
+  background: #1d242b;
+  border: 1px solid #324038;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+
+[data-bs-theme="dark"] .article-shell .article-lead {
+  color: #c7d7cc;
+}

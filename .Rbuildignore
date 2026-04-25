@@ -1,0 +1,10 @@
+^data-raw$
+^README\.Rmd$
+^\.github$
+^\.cache$
+^\.pkgdown-assets$
+^\.r-library$
+^windcut\.Rcheck$
+^teststhat$
+^vignettes/.*\.knit\.md$
+^vignettes/pandoc.*\.html$

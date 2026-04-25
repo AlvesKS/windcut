@@ -1,0 +1,277 @@
+---
+title: "Getting Started with windcut"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with windcut}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[UTF-8]{inputenc}
+---
+
+Run this setup first. It loads the packages used in the tutorial and sets
+figure options.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 4.5,
+  fig.alt = "ggplot2 chart showing simulated weather, weather windows, or screened features."
+)
+```
+
+```{r packages, message=FALSE, warning=FALSE}
+library(windcut)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(cowplot)
+```
+
+`windcut` is designed for plant disease epidemiologists who want to explore
+which periods of weather are most informative around a biologically meaningful
+reference date.
+
+<div class="tutorial-note">
+<strong>What you will learn.</strong> In this tutorial, we will load a bundled
+demo dataset, define relative-time windows, generate weather features, and
+screen them against disease intensity.
+</div>
+
+## Load a demo dataset
+
+The first step is to load a bundled multi-site dataset. Each site has its own
+daily weather time series, and the assessment table contains one disease
+outcome per site. This mirrors the package's modeling unit: weather history for
+a location paired with one disease outcome. The bundled data also include the
+hourly source table used to create the daily version, but this tutorial starts
+from daily data so the window-pane workflow is easier to read.
+
+```{r}
+data(window_pane_demo_data)
+
+weather <- window_pane_demo_data$weather
+assessments <- window_pane_demo_data$assessments
+
+knitr::kable(head(weather))
+knitr::kable(assessments)
+```
+
+Before generating features, it is useful to look at the daily weather signal
+relative to a reference date. The dashed line marks the disease assessment for
+one site, and the plotted weather history is the period immediately before that
+reference date that later gets summarized into windows.
+
+```{r}
+first_reference_time <- assessments %>%
+  slice(1) %>%
+  pull(assessment_time)
+plot_weather <- weather %>%
+  filter(site_id == assessments$site_id[1]) %>%
+  filter(time >= first_reference_time - 21 * 86400, time <= first_reference_time)
+
+ggplot(plot_weather, aes(time, daily_mean_temp)) +
+  geom_vline(
+    xintercept = first_reference_time,
+    linetype = "dashed",
+    color = "#20262e",
+    linewidth = 0.7
+  ) +
+  geom_line(color = "#2b6c4f", linewidth = 0.8) +
+  labs(
+    title = "Temperature history before the assessment",
+    x = "Time",
+    y = "Daily mean temperature (deg C)"
+  ) +
+  cowplot::theme_half_open()
+```
+
+## Understand the data structure
+
+The bundled demo weather is already daily. Its weather-column names include the
+daily statistic used to create them:
+
+- `time`: timestamp of the daily observation
+- `daily_mean_temp`: daily mean temperature
+- `daily_mean_rh`: daily mean relative humidity
+- `daily_sum_rain`: daily rainfall total
+- `daily_sum_leaf_wetness`: daily wet hours
+
+And an assessment table with at least:
+
+- a reference date, such as assessment, planting, flowering, or inoculation date
+- optionally an assessment ID
+- optionally a disease response such as incidence or severity
+
+Your own data do not need to use those exact weather-column names. In
+`scan_windows()` and `window_pane()`, use `weather_cols` to choose the weather
+variables to summarize. For example, a dataset with columns named `temp2m`,
+`sradiation`, and `prectot` can use `weather_cols = c("temp2m", "sradiation",
+"prectot")`. If you want shorter feature names, use a named vector such as
+`weather_cols = c(temp = "temp2m", solar = "sradiation", rain = "prectot")`.
+
+## Define candidate windows
+
+Here we use the classic fixed-width window pane: one 5-day exposure period
+slides through the relative-time range. Negative offsets are before the
+reference date, `0` is the reference date, and positive offsets are after the
+reference date. The optional `reference_col` stores which date column should be
+used later when the windows are applied to site-specific data. The default
+`slide_by = 1` moves the window one relative-time unit at a time; use a larger
+value when you want a coarser scan.
+
+```{r}
+windows <- make_windows(
+  min_offset = -21,
+  max_offset = 0,
+  width = 5,
+  reference_col = "assessment_time"
+)
+
+knitr::kable(head(windows))
+```
+
+Window labels encode direction and interval boundaries. For example,
+`window_m05_z00` means that a weather summary was computed over the 5-day
+interval ending at whichever reference date the user chooses. A label such as
+`window_p01_p06` would mean the 5-day interval beginning 1 day after the
+reference date.
+
+When the relevant exposure duration is uncertain, give `width` several values,
+such as `width = 2:4` or `width = c(2, 4, 6)`. The same `slide_by` argument
+controls how far the window start moves between candidate windows.
+
+Because the demo weather uses daily column names, we define which daily columns
+should be summarized inside each candidate window. The names on the left become
+the names used in the generated window features.
+
+```{r}
+daily_weather_cols <- c(
+  temp = "daily_mean_temp",
+  rh = "daily_mean_rh",
+  rain = "daily_sum_rain",
+  leaf_wetness = "daily_sum_leaf_wetness"
+)
+```
+
+The `statistics` argument controls what is computed inside each candidate
+window. For example, `statistics = c("mean", "median", "sd", "IQR")` asks for
+those four R functions for each weather variable. Custom named functions also
+work.
+
+## Scan one reference date
+
+Scanning one site and one reference date first is a good diagnostic step. It shows
+exactly which summaries will be computed for each candidate window before the
+same operation is repeated for every site.
+
+```{r}
+scanned <- scan_windows(
+  weather = weather %>% filter(site_id == assessments$site_id[1]),
+  reference_time = assessments$assessment_time[1],
+  windows = windows,
+  weather_cols = daily_weather_cols,
+  statistics = list(
+    temp = c("mean", "median"),
+    rh = list(mean = "mean", days_ge_90 = count_ge(90)),
+    rain = c("sum", "sd"),
+    leaf_wetness = "sum"
+  )
+)
+
+knitr::kable(
+  scanned %>%
+    select(label, temp_mean, temp_median, rain_sum, rain_sd, rh_mean, rh_days_ge_90) %>%
+    slice_head(n = 6)
+)
+```
+
+This is useful when you want to inspect one assessment in detail before scaling
+up to all observations.
+
+## Build a model-ready table
+
+`window_pane()` scales the single-assessment scan to the full dataset. The
+result is a wide table with one row per site and one column for each
+metric-window combination, ready for screening or modeling.
+
+```{r}
+features <- window_pane(
+  weather = weather,
+  assessments = assessments,
+  windows = windows,
+  id_col = "site_id",
+  response_col = "disease_intensity",
+  weather_cols = daily_weather_cols,
+  statistics = list(
+    temp = c("mean", "median"),
+    rh = list(mean = "mean", days_ge_90 = count_ge(90)),
+    rain = c("sum", "sd"),
+    leaf_wetness = "sum"
+  )
+)
+
+feature_overview <- data.frame(
+  rows = nrow(features),
+  columns = ncol(features)
+)
+feature_names <- data.frame(
+  feature = names(features %>% select(1:10))
+)
+
+knitr::kable(feature_overview)
+knitr::kable(feature_names)
+```
+
+## Screen candidate features
+
+The first screening question is whether each window-derived feature is related
+to the disease response. Spearman correlation is used here because it can
+capture monotonic relationships without assuming linearity.
+
+```{r}
+screened <- screen_window_features(
+  data = features,
+  response_col = "disease_intensity",
+  method = "spearman"
+)
+
+knitr::kable(head(screened))
+```
+
+The table is easier to interpret when the strongest associations are plotted.
+The chart below ranks the top features by absolute correlation, highlighting
+which weather summaries and timing windows deserve closer inspection.
+
+```{r}
+top_screened <- screened %>%
+  mutate(abs_estimate = abs(estimate)) %>%
+  arrange(desc(abs_estimate)) %>%
+  slice_head(n = 8) %>%
+  mutate(feature = factor(feature, levels = rev(feature)))
+
+ggplot(top_screened, aes(abs(estimate), feature)) +
+  geom_col(fill = "#6ea87d") +
+  labs(
+    title = "Top screened windows",
+    x = "Absolute correlation",
+    y = NULL
+  ) +
+  cowplot::theme_half_open()
+```
+
+This output can be passed to downstream modeling workflows for feature
+selection, disease forecasting, or explanatory analyses.
+
+## Suggested workflow
+
+1. Start with broad windows that reflect epidemiological uncertainty.
+2. Generate interpretable summaries rather than opaque features.
+3. Screen candidate predictors to identify promising timing intervals.
+4. Fit and validate predictive models on independent datasets whenever possible.
+
+
+
+
