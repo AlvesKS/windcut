@@ -26,9 +26,11 @@ Imports:
     stats
 Suggests:
     dplyr,
+    fdatest,
     knitr,
     markdown,
     pkgdown,
+    refund,
     rmarkdown,
     tidyr,
     testthat (>= 3.0.0)
