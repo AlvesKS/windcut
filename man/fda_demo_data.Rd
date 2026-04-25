@@ -1,4 +1,5 @@
 \name{fda_demo_data}
+\alias{fda_demo_data}
 \docType{data}
 \title{Demo Data for Functional Data Analysis Workflows}
 \format{

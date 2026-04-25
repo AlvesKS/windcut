@@ -1,4 +1,5 @@
 \name{window_pane_demo_data}
+\alias{window_pane_demo_data}
 \docType{data}
 \title{Demo Data for Window-Pane Workflows}
 \format{

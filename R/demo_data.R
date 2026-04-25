@@ -16,6 +16,8 @@
 #'
 #' @format A list with components `weather`, `weather_hourly`, and
 #'   `assessments`.
+#' @name window_pane_demo_data
+#' @aliases window_pane_demo_data
 "window_pane_demo_data"
 
 #' Demo Data for Functional Data Analysis Workflows
@@ -34,5 +36,7 @@
 #'
 #' @format A list with components `weather_daily`, `assessments`, and
 #'   `variable_specs`.
+#' @name fda_demo_data
+#' @aliases fda_demo_data
 "fda_demo_data"
 

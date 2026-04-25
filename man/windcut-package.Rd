@@ -14,7 +14,9 @@ plant disease epidemiology workflows.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://example.org/windcut}
+  \item \url{https://github.com/AlvesKS/windcut}
+  \item \url{https://alvesks.github.io/windcut/}
+  \item Report bugs at \url{https://github.com/AlvesKS/windcut/issues}
 }
 
 }
