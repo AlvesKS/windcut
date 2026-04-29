@@ -47,7 +47,8 @@ named, the names are used in the output column names.}
 \item{statistics}{Daily statistics to compute. Use a character vector to
 apply the same statistics to all \code{weather_cols}, such as
 \code{c("mean", "max")}. Use a named list to choose statistics by variable or
-to provide custom named functions.}
+to provide custom named functions. Use \code{.conditions} for multivariable
+condition summaries.}
 
 \item{keep_time}{If \code{TRUE}, include a daily \code{POSIXct} time column at midnight.
 This requires either \code{time_col} or an existing \code{date_col}.}
@@ -63,7 +64,8 @@ Converts sub-daily weather observations to one row per day, optionally within
 each site or location. The same \code{statistics} style used by the window
 workflow is supported here: use a character vector to apply the same
 statistics to every variable, or use a named list to choose different
-statistics for different variables.
+statistics for different variables. The special \code{.conditions} entry can be
+used for multivariable summaries within each daily group.
 }
 \examples{
 hourly <- simulate_weather_series(days = 5, n_series = 2, id_col = "site_id", seed = 1)

@@ -208,6 +208,50 @@ daily_selected_stats %>%
   knitr::kable()
 ```
 
+## Summarize daily biological conditions
+
+Daily aggregation can also count multivariable conditions within each day. This
+is useful when hourly records are available and the biological question is about
+how many hours per day were favorable. The example below counts warm and humid
+hours using `.conditions`.
+
+```{r}
+daily_condition_stats <- aggregate_weather_daily(
+  weather = hourly_weather,
+  id_col = "site_id",
+  statistics = list(
+    temp = "mean",
+    rh = "mean",
+    .conditions = list(
+      favorable_hours = count_when(temp >= 18 & temp <= 26 & rh >= 90)
+    )
+  )
+)
+
+daily_condition_stats %>%
+  filter(site_id == site_id[1]) %>%
+  select(site_id, date, daily_mean_temp, daily_mean_rh, daily_favorable_hours) %>%
+  slice_head(n = 8) %>%
+  knitr::kable()
+```
+
+The plot below checks whether the condition behaves as expected through time.
+This is a useful quality-control step before the daily table is used in
+window-pane feature generation.
+
+```{r}
+daily_condition_stats %>%
+  filter(site_id == site_id[1]) %>%
+  ggplot(aes(date, daily_favorable_hours)) +
+  geom_col(fill = "#3f7d58", width = 0.75) +
+  labs(
+    title = "Daily favorable-hour counts from hourly records",
+    x = NULL,
+    y = "Favorable hours per day"
+  ) +
+  cowplot::theme_half_open()
+```
+
 ## Use non-standard weather-column names
 
 Field datasets often use names such as `temp2m`, `prectot`, or `sradiation`.

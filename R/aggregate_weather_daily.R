@@ -4,7 +4,8 @@
 #' each site or location. The same `statistics` style used by the window
 #' workflow is supported here: use a character vector to apply the same
 #' statistics to every variable, or use a named list to choose different
-#' statistics for different variables.
+#' statistics for different variables. The special `.conditions` entry can be
+#' used for multivariable summaries within each daily group.
 #'
 #' @param weather A weather data frame.
 #' @param id_col Optional site, location, or series identifier column. If
@@ -24,7 +25,8 @@
 #' @param statistics Daily statistics to compute. Use a character vector to
 #'   apply the same statistics to all `weather_cols`, such as
 #'   `c("mean", "max")`. Use a named list to choose statistics by variable or
-#'   to provide custom named functions.
+#'   to provide custom named functions. Use `.conditions` for multivariable
+#'   condition summaries.
 #' @param keep_time If `TRUE`, include a daily `POSIXct` time column at midnight.
 #'   This requires either `time_col` or an existing `date_col`.
 #' @param name_prefix Prefix used in aggregated weather columns. The default
@@ -77,12 +79,25 @@ aggregate_weather_daily <- function(
     stop("`name_prefix` must be a single character string.", call. = FALSE)
   }
 
-  weather_cols <- .resolve_weather_cols(
+  weather_cols_was_null <- is.null(weather_cols)
+  if (weather_cols_was_null && .statistics_condition_only(statistics)) {
+    weather_cols <- stats::setNames(character(), character())
+  } else if (is.character(weather_cols) && length(weather_cols) == 0) {
+    weather_cols <- stats::setNames(character(), character())
+  } else {
+    weather_cols <- .resolve_weather_cols(
+      weather_cols,
+      temp_col = temp_col,
+      rh_col = rh_col,
+      rain_col = rain_col,
+      leaf_wetness_col = leaf_wetness_col
+    )
+  }
+  weather_cols <- .extend_weather_cols_from_statistics(
     weather_cols,
-    temp_col = temp_col,
-    rh_col = rh_col,
-    rain_col = rain_col,
-    leaf_wetness_col = leaf_wetness_col
+    statistics,
+    names(weather),
+    replace_defaults = weather_cols_was_null
   )
 
   if (!is.data.frame(weather)) {
@@ -148,15 +163,27 @@ aggregate_weather_daily <- function(
     for (variable in names(statistics)) {
       variable_stats <- statistics[[variable]]
       for (statistic_name in names(variable_stats)) {
-        output_name <- .daily_output_name(
-          variable = variable,
-          statistic = statistic_name,
-          name_prefix = name_prefix
-        )
-        out[[output_name]] <- .compute_window_statistic(
-          group_data[[weather_cols[[variable]]]],
-          variable_stats[[statistic_name]]
-        )
+        if (identical(variable, ".conditions")) {
+          output_name <- .daily_output_name(
+            variable = "",
+            statistic = statistic_name,
+            name_prefix = name_prefix
+          )
+          out[[output_name]] <- .compute_condition_statistic(
+            group_data,
+            variable_stats[[statistic_name]]
+          )
+        } else {
+          output_name <- .daily_output_name(
+            variable = variable,
+            statistic = statistic_name,
+            name_prefix = name_prefix
+          )
+          out[[output_name]] <- .compute_window_statistic(
+            group_data[[weather_cols[[variable]]]],
+            variable_stats[[statistic_name]]
+          )
+        }
       }
     }
 

@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">windcut</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,8 @@
     <li><h6 class="dropdown-header" data-toc-skip>Tutorials</h6></li>
     <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with windcut</a></li>
     <li><a class="dropdown-item" href="../articles/daily-weather-aggregation.html">Daily Weather Aggregation</a></li>
+    <li><a class="dropdown-item" href="../articles/biological-weather-summaries.html">Deriving biologically meaningful weather summaries</a></li>
+    <li><a class="dropdown-item" href="../articles/multivariable-favorability.html">Summarizing multivariable disease-favorable conditions</a></li>
     <li><a class="dropdown-item" href="../articles/window-pane-workflow.html">Window-Pane Workflow</a></li>
     <li><a class="dropdown-item" href="../articles/feature-screening.html">Feature Screening for Disease Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/functional-data-analysis.html">Functional Data Analysis for Weather Series</a></li>
@@ -121,51 +123,61 @@ assessment per site. Here the windows end one day before the assessment
 date, so the disease observation is not mixed with same-day weather.</p>
 <p>The daily weather column names are kept exactly as they appear in the
 data: <code>daily_mean_temp</code>, <code>daily_mean_rh</code>,
-<code>daily_sum_rain</code>, and <code>daily_sum_leaf_wetness</code>.
-The <code>statistics</code> list uses those same names, so the generated
-feature names show both the original daily variable and the window
-summary.</p>
+<code>daily_sum_rain</code>, and <code>daily_sum_leaf_wetness</code>. We
+also derive <code>daily_vpd</code> from temperature and relative
+humidity to show that derived variables can be screened in the same
+workflow. The <code>statistics</code> list uses those column names, so
+the generated feature names show both the weather variable and the
+window summary.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">data</span>(window_pane_demo_data)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>weather <span class="ot">&lt;-</span> window_pane_demo_data<span class="sc">$</span>weather</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>assessments <span class="ot">&lt;-</span> window_pane_demo_data<span class="sc">$</span>assessments</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>windows <span class="ot">&lt;-</span> <span class="fu">make_windows</span>(<span class="at">min_offset =</span> <span class="sc">-</span><span class="dv">18</span>, <span class="at">max_offset =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">width =</span> <span class="dv">5</span>, <span class="at">reference_col =</span> <span class="st">"assessment_time"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>daily_weather_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="st">"daily_mean_temp"</span>,</span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="st">"daily_mean_rh"</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="st">"daily_sum_rain"</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="st">"daily_sum_leaf_wetness"</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>)</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>summary_statistics <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>  <span class="at">daily_mean_temp =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"min"</span>, <span class="st">"max"</span>),</span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  <span class="at">daily_mean_rh =</span> <span class="st">"mean"</span>,</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="at">daily_sum_rain =</span> <span class="st">"sum"</span>,</span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  <span class="at">daily_sum_leaf_wetness =</span> <span class="st">"sum"</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>)</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>features <span class="ot">&lt;-</span> <span class="fu">window_pane</span>(</span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>  <span class="at">weather =</span> weather,</span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>  <span class="at">assessments =</span> assessments,</span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>  <span class="at">windows =</span> windows,</span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>  <span class="at">response_col =</span> <span class="st">"disease_intensity"</span>,</span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>  <span class="at">weather_cols =</span> daily_weather_cols,</span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>  <span class="at">statistics =</span> summary_statistics</span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>)</span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>feature_cols <span class="ot">&lt;-</span> features <span class="sc">%&gt;%</span></span>
-<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">"_window_"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>  <span class="fu">names</span>()</span>
-<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a></span>
-<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>feature_table_overview <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  <span class="at">rows =</span> <span class="fu">nrow</span>(features),</span>
-<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  <span class="at">candidate_feature_columns =</span> <span class="fu">length</span>(feature_cols)</span>
-<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>)</span>
-<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a></span>
-<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(feature_table_overview)</span></code></pre></div>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>weather <span class="ot">&lt;-</span> window_pane_demo_data<span class="sc">$</span>weather <span class="sc">|&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="fu">derive_vpd</span>(daily_mean_temp, daily_mean_rh, <span class="at">name =</span> <span class="st">"daily_vpd"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>assessments <span class="ot">&lt;-</span> window_pane_demo_data<span class="sc">$</span>assessments</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>windows <span class="ot">&lt;-</span> <span class="fu">make_windows</span>(<span class="at">min_offset =</span> <span class="sc">-</span><span class="dv">18</span>, <span class="at">max_offset =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">width =</span> <span class="dv">5</span>, <span class="at">reference_col =</span> <span class="st">"assessment_time"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>daily_weather_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="st">"daily_mean_temp"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="st">"daily_mean_rh"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="st">"daily_vpd"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  <span class="st">"daily_sum_rain"</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  <span class="st">"daily_sum_leaf_wetness"</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>summary_statistics <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="at">daily_mean_temp =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">days_18_26 =</span> <span class="fu">count_between</span>(<span class="dv">18</span>, <span class="dv">26</span>)),</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  <span class="at">daily_mean_rh =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">humid_days =</span> <span class="fu">humid_hours</span>(<span class="dv">90</span>)),</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  <span class="at">daily_vpd =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">dry_days =</span> <span class="fu">count_above</span>(<span class="fl">1.2</span>)),</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  <span class="at">daily_sum_rain =</span> <span class="fu">list</span>(<span class="at">total =</span> <span class="st">"sum"</span>, <span class="at">rain_events =</span> <span class="fu">rain_events</span>(<span class="fl">0.2</span>)),</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  <span class="at">daily_sum_leaf_wetness =</span> <span class="fu">list</span>(<span class="at">wet_days =</span> <span class="fu">wet_days</span>(<span class="dv">0</span>)),</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>  <span class="at">.conditions =</span> <span class="fu">list</span>(</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>    <span class="at">favorable_days =</span> <span class="fu">count_when</span>(</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>      daily_mean_temp <span class="sc">&gt;=</span> <span class="dv">18</span> <span class="sc">&amp;</span> daily_mean_temp <span class="sc">&lt;=</span> <span class="dv">26</span> <span class="sc">&amp;</span> daily_mean_rh <span class="sc">&gt;=</span> <span class="dv">90</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>    )</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>  )</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>)</span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>features <span class="ot">&lt;-</span> <span class="fu">window_pane</span>(</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>  <span class="at">weather =</span> weather,</span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>  <span class="at">assessments =</span> assessments,</span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>  <span class="at">windows =</span> windows,</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>  <span class="at">response_col =</span> <span class="st">"disease_intensity"</span>,</span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  <span class="at">weather_cols =</span> daily_weather_cols,</span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  <span class="at">statistics =</span> summary_statistics</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>)</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>feature_cols <span class="ot">&lt;-</span> features <span class="sc">%&gt;%</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">"_window_"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  <span class="fu">names</span>()</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>feature_table_overview <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a>  <span class="at">rows =</span> <span class="fu">nrow</span>(features),</span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>  <span class="at">candidate_feature_columns =</span> <span class="fu">length</span>(feature_cols)</span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>)</span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(feature_table_overview)</span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="right">rows</th>
@@ -173,7 +185,7 @@ summary.</p>
 </tr></thead>
 <tbody><tr class="odd">
 <td align="right">10</td>
-<td align="right">91</td>
+<td align="right">143</td>
 </tr></tbody>
 </table>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(<span class="at">feature =</span> <span class="fu">head</span>(feature_cols, <span class="dv">8</span>)))</span></code></pre></div>
@@ -189,22 +201,22 @@ summary.</p>
 <td align="left">daily_mean_temp_mean_window_m18_m13</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_mean_temp_min_window_m18_m13</td>
+<td align="left">daily_mean_temp_days_18_26_window_m18_m13</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_temp_max_window_m18_m13</td>
-</tr>
-<tr class="odd">
 <td align="left">daily_mean_rh_mean_window_m18_m13</td>
 </tr>
+<tr class="odd">
+<td align="left">daily_mean_rh_humid_days_window_m18_m13</td>
+</tr>
 <tr class="even">
-<td align="left">daily_sum_rain_sum_window_m18_m13</td>
+<td align="left">daily_vpd_mean_window_m18_m13</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_sum_leaf_wetness_sum_window_m18_m13</td>
+<td align="left">daily_vpd_dry_days_window_m18_m13</td>
 </tr>
 <tr class="even">
-<td align="left">n_obs_window_m17_m12</td>
+<td align="left">daily_sum_rain_total_window_m18_m13</td>
 </tr>
 </tbody>
 </table>
@@ -226,15 +238,15 @@ on a linear response shape than Pearson correlation.</p>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span>
 <span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a></span>
 <span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(screened <span class="sc">%&gt;%</span> <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">10</span>))</span></code></pre></div>
-<table class="table">
+<table style="width:100%;" class="table">
 <colgroup>
-<col width="30%">
-<col width="17%">
-<col width="13%">
-<col width="9%">
+<col width="33%">
+<col width="21%">
+<col width="11%">
 <col width="8%">
-<col width="9%">
-<col width="9%">
+<col width="7%">
+<col width="8%">
+<col width="8%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">feature</th>
@@ -253,16 +265,16 @@ on a linear response shape than Pearson correlation.</p>
 <td align="right">-0.6242424</td>
 <td align="right">0.0602490</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
 </tr>
 <tr class="even">
-<td align="left">daily_sum_rain_sum_window_m08_m03</td>
-<td align="left">daily_sum_rain_sum</td>
+<td align="left">daily_sum_rain_total_window_m08_m03</td>
+<td align="left">daily_sum_rain_total</td>
 <td align="left">window_m08_m03</td>
 <td align="right">-0.6000000</td>
 <td align="right">0.0731199</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
 </tr>
 <tr class="odd">
 <td align="left">daily_mean_rh_mean_window_m12_m07</td>
@@ -271,52 +283,34 @@ on a linear response shape than Pearson correlation.</p>
 <td align="right">-0.5878788</td>
 <td align="right">0.0802151</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_temp_min_window_m08_m03</td>
-<td align="left">daily_mean_temp_min</td>
-<td align="left">window_m08_m03</td>
-<td align="right">0.5878788</td>
-<td align="right">0.0802151</td>
-<td align="right">10</td>
-<td align="right">0.8713722</td>
-</tr>
-<tr class="odd">
-<td align="left">daily_mean_temp_min_window_m09_m04</td>
-<td align="left">daily_mean_temp_min</td>
+<td align="left">daily_sum_rain_rain_events_window_m09_m04</td>
+<td align="left">daily_sum_rain_rain_events</td>
 <td align="left">window_m09_m04</td>
-<td align="right">0.5515152</td>
-<td align="right">0.1042978</td>
+<td align="right">0.5698029</td>
+<td align="right">0.0855044</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
-</tr>
-<tr class="even">
-<td align="left">daily_mean_temp_min_window_m10_m05</td>
-<td align="left">daily_mean_temp_min</td>
-<td align="left">window_m10_m05</td>
-<td align="right">0.5151515</td>
-<td align="right">0.1328231</td>
-<td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
 </tr>
 <tr class="odd">
+<td align="left">daily_vpd_mean_window_m10_m05</td>
+<td align="left">daily_vpd_mean</td>
+<td align="left">window_m10_m05</td>
+<td align="right">0.5636364</td>
+<td align="right">0.0957916</td>
+<td align="right">10</td>
+<td align="right">0.7946892</td>
+</tr>
+<tr class="even">
 <td align="left">daily_mean_rh_mean_window_m08_m03</td>
 <td align="left">daily_mean_rh_mean</td>
 <td align="left">window_m08_m03</td>
 <td align="right">-0.5151515</td>
 <td align="right">0.1328231</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
-</tr>
-<tr class="even">
-<td align="left">daily_mean_temp_min_window_m11_m06</td>
-<td align="left">daily_mean_temp_min</td>
-<td align="left">window_m11_m06</td>
-<td align="right">0.4909091</td>
-<td align="right">0.1544427</td>
-<td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
 </tr>
 <tr class="odd">
 <td align="left">daily_mean_rh_mean_window_m07_m02</td>
@@ -325,16 +319,34 @@ on a linear response shape than Pearson correlation.</p>
 <td align="right">-0.4909091</td>
 <td align="right">0.1544427</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_temp_min_window_m15_m10</td>
-<td align="left">daily_mean_temp_min</td>
-<td align="left">window_m15_m10</td>
+<td align="left">daily_mean_rh_mean_window_m11_m06</td>
+<td align="left">daily_mean_rh_mean</td>
+<td align="left">window_m11_m06</td>
 <td align="right">-0.4787879</td>
 <td align="right">0.1660580</td>
 <td align="right">10</td>
-<td align="right">0.8713722</td>
+<td align="right">0.7946892</td>
+</tr>
+<tr class="odd">
+<td align="left">daily_mean_rh_mean_window_m09_m04</td>
+<td align="left">daily_mean_rh_mean</td>
+<td align="left">window_m09_m04</td>
+<td align="right">-0.4787879</td>
+<td align="right">0.1660580</td>
+<td align="right">10</td>
+<td align="right">0.7946892</td>
+</tr>
+<tr class="even">
+<td align="left">daily_vpd_mean_window_m08_m03</td>
+<td align="left">daily_vpd_mean</td>
+<td align="left">window_m08_m03</td>
+<td align="right">0.4666667</td>
+<td align="right">0.1782193</td>
+<td align="right">10</td>
+<td align="right">0.7946892</td>
 </tr>
 </tbody>
 </table>
@@ -401,10 +413,10 @@ rest of the candidate set.</p>
 <span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(correlation_screen<span class="sc">$</span>high_correlations <span class="sc">%&gt;%</span> <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">10</span>))</span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="36%">
-<col width="35%">
-<col width="12%">
-<col width="16%">
+<col width="37%">
+<col width="37%">
+<col width="10%">
+<col width="14%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">feature_a</th>
@@ -414,62 +426,62 @@ rest of the candidate set.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td align="left">daily_sum_rain_rain_events_window_m12_m07</td>
+<td align="left">daily_sum_rain_rain_events_window_m11_m06</td>
+<td align="right">1.0000000</td>
+<td align="right">1.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">daily_sum_rain_rain_events_window_m07_m02</td>
+<td align="left">daily_sum_rain_rain_events_window_m06_m01</td>
+<td align="right">1.0000000</td>
+<td align="right">1.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">daily_mean_temp_mean_window_m18_m13</td>
+<td align="left">daily_vpd_mean_window_m18_m13</td>
+<td align="right">0.9878788</td>
+<td align="right">0.9878788</td>
+</tr>
+<tr class="even">
 <td align="left">daily_mean_temp_mean_window_m17_m12</td>
-<td align="left">daily_mean_temp_min_window_m17_m12</td>
-<td align="right">1.0000000</td>
-<td align="right">1.0000000</td>
-</tr>
-<tr class="even">
-<td align="left">daily_mean_temp_max_window_m16_m11</td>
-<td align="left">daily_mean_temp_max_window_m15_m10</td>
-<td align="right">1.0000000</td>
-<td align="right">1.0000000</td>
-</tr>
-<tr class="odd">
-<td align="left">daily_mean_temp_min_window_m14_m09</td>
-<td align="left">daily_mean_temp_min_window_m13_m08</td>
-<td align="right">0.9878788</td>
-<td align="right">0.9878788</td>
-</tr>
-<tr class="even">
-<td align="left">daily_mean_temp_mean_window_m12_m07</td>
-<td align="left">daily_mean_temp_max_window_m12_m07</td>
+<td align="left">daily_vpd_mean_window_m17_m12</td>
 <td align="right">0.9878788</td>
 <td align="right">0.9878788</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_mean_temp_min_window_m18_m13</td>
-<td align="left">daily_mean_temp_max_window_m11_m06</td>
+<td align="left">daily_mean_temp_mean_window_m16_m11</td>
+<td align="left">daily_vpd_mean_window_m16_m11</td>
+<td align="right">0.9878788</td>
+<td align="right">0.9878788</td>
+</tr>
+<tr class="even">
+<td align="left">daily_mean_temp_mean_window_m13_m08</td>
+<td align="left">daily_vpd_mean_window_m06_m01</td>
+<td align="right">-0.9878788</td>
+<td align="right">0.9878788</td>
+</tr>
+<tr class="odd">
+<td align="left">daily_vpd_mean_window_m13_m08</td>
+<td align="left">daily_vpd_mean_window_m06_m01</td>
 <td align="right">-0.9878788</td>
 <td align="right">0.9878788</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_temp_min_window_m09_m04</td>
-<td align="left">daily_mean_temp_min_window_m08_m03</td>
+<td align="left">daily_mean_temp_mean_window_m06_m01</td>
+<td align="left">daily_vpd_mean_window_m06_m01</td>
 <td align="right">0.9878788</td>
 <td align="right">0.9878788</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_mean_temp_mean_window_m17_m12</td>
-<td align="left">daily_mean_temp_max_window_m17_m12</td>
+<td align="left">daily_mean_temp_mean_window_m15_m10</td>
+<td align="left">daily_vpd_mean_window_m15_m10</td>
 <td align="right">0.9757576</td>
 <td align="right">0.9757576</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_temp_min_window_m17_m12</td>
-<td align="left">daily_mean_temp_max_window_m17_m12</td>
-<td align="right">0.9757576</td>
-<td align="right">0.9757576</td>
-</tr>
-<tr class="odd">
-<td align="left">daily_mean_temp_min_window_m15_m10</td>
-<td align="left">daily_mean_temp_min_window_m14_m09</td>
-<td align="right">0.9757576</td>
-<td align="right">0.9757576</td>
-</tr>
-<tr class="even">
-<td align="left">daily_sum_rain_sum_window_m14_m09</td>
-<td align="left">daily_sum_rain_sum_window_m13_m08</td>
+<td align="left">daily_mean_temp_mean_window_m13_m08</td>
+<td align="left">daily_vpd_mean_window_m13_m08</td>
 <td align="right">0.9757576</td>
 <td align="right">0.9757576</td>
 </tr>
@@ -488,37 +500,37 @@ rest of the candidate set.</p>
 <td align="left">daily_mean_rh_mean_window_m18_m13</td>
 </tr>
 <tr class="even">
-<td align="left">daily_sum_leaf_wetness_sum_window_m18_m13</td>
+<td align="left">daily_sum_rain_rain_events_window_m18_m13</td>
 </tr>
 <tr class="odd">
+<td align="left">daily_mean_temp_mean_window_m17_m12</td>
+</tr>
+<tr class="even">
 <td align="left">daily_mean_rh_mean_window_m17_m12</td>
 </tr>
+<tr class="odd">
+<td align="left">daily_sum_rain_total_window_m17_m12</td>
+</tr>
 <tr class="even">
-<td align="left">daily_sum_rain_sum_window_m17_m12</td>
+<td align="left">daily_sum_rain_rain_events_window_m17_m12</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_sum_leaf_wetness_sum_window_m17_m12</td>
+<td align="left">daily_sum_rain_total_window_m15_m10</td>
 </tr>
 <tr class="even">
-<td align="left">daily_sum_leaf_wetness_sum_window_m16_m11</td>
+<td align="left">daily_sum_rain_rain_events_window_m15_m10</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_mean_temp_max_window_m15_m10</td>
+<td align="left">daily_mean_temp_mean_window_m14_m09</td>
 </tr>
 <tr class="even">
-<td align="left">daily_sum_rain_sum_window_m15_m10</td>
+<td align="left">daily_sum_rain_rain_events_window_m14_m09</td>
 </tr>
 <tr class="odd">
-<td align="left">daily_sum_leaf_wetness_sum_window_m15_m10</td>
+<td align="left">daily_mean_rh_mean_window_m13_m08</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_rh_mean_window_m14_m09</td>
-</tr>
-<tr class="odd">
-<td align="left">daily_mean_temp_max_window_m13_m08</td>
-</tr>
-<tr class="even">
-<td align="left">daily_mean_rh_mean_window_m12_m07</td>
+<td align="left">daily_sum_rain_rain_events_window_m13_m08</td>
 </tr>
 </tbody>
 </table>
@@ -544,15 +556,15 @@ the number set aside under the selected correlation threshold.</p>
 <tbody>
 <tr class="odd">
 <td align="left">Original features</td>
-<td align="right">91</td>
+<td align="right">143</td>
 </tr>
 <tr class="even">
 <td align="left">Suggested features</td>
-<td align="right">20</td>
+<td align="right">22</td>
 </tr>
 <tr class="odd">
 <td align="left">Removed features</td>
-<td align="right">71</td>
+<td align="right">121</td>
 </tr>
 </tbody>
 </table>

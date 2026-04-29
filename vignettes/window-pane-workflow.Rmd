@@ -276,7 +276,7 @@ daily_weather_cols <- c(
 
 summary_statistics <- list(
   daily_mean_temp = c("mean", "min", "max"),
-  daily_mean_rh = list(mean = "mean", median = "median", days_ge_90 = count_ge(90)),
+  daily_mean_rh = list(mean = "mean", median = "median", days_at_or_above_90 = count_at_or_above(90)),
   daily_sum_rain = c("sum", "max"),
   daily_sum_leaf_wetness = "sum"
 )

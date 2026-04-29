@@ -13,9 +13,12 @@ scan_windows(
   rain_col = "rain",
   leaf_wetness_col = "leaf_wetness",
   unit = c("days", "hours"),
-  rh_threshold = 90,
-  statistics = list(temp = c("mean", "min", "max"), rh = "mean", rain = "sum", leaf_wetness =
-    "sum")
+  statistics = list(
+    temp = c("mean", "min", "max"),
+    rh = "mean",
+    rain = "sum",
+    leaf_wetness = "sum"
+  )
 )
 }
 \arguments{
@@ -40,10 +43,6 @@ named, the names are used in the output feature names.}
 
   \item{unit}{Time unit for relative-time windows. One of \code{"days"} or
 \code{"hours"}.}
-
-\item{rh_threshold}{Optional threshold value retained in the API. Threshold
-counts are computed through \code{statistics}, for example
-\code{list(rh = list(days_ge_90 = count_ge(90)))}.}
 
   \item{statistics}{Summary statistics passed to \code{\link[=summarise_weather_window]{summarise_weather_window()}}.}
 }

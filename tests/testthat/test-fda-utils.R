@@ -204,6 +204,67 @@ test_that("high-level FDA plotting and extraction functions return user-facing o
   expect_equal(nrow(features), length(unique(data$site_id)))
 })
 
+test_that("extract_fda_features accepts different statistics by variable", {
+  data <- do.call(rbind, lapply(1:3, function(i) {
+    data.frame(
+      site_id = sprintf("S%02d", i),
+      dap = 1:5,
+      rh = 80 + i + 1:5,
+      rain = c(0, 0.2, 0, 1, 0.4) * i
+    )
+  }))
+
+  analysis <- list(
+    data = data,
+    id_col = "site_id",
+    time_col = "dap",
+    value_cols = c("rh", "rain"),
+    value_labels = c(rh = "Relative humidity", rain = "Rainfall"),
+    alpha = 0.05,
+    interval_summary = data.frame(
+      variable = c("rh", "rain"),
+      variable_label = c("Relative humidity", "Rainfall"),
+      alpha = c(0.05, 0.05),
+      alpha_label = c("alpha = 0.05", "alpha = 0.05"),
+      start = c(2, 2),
+      end = c(4, 4),
+      status = c("Significant interval", "Significant interval"),
+      stringsAsFactors = FALSE
+    )
+  )
+  class(analysis) <- "windcut_fda_analysis"
+
+  features <- extract_fda_features(
+    analysis,
+    alpha = 0.05,
+    statistics = list(
+      rh = c("mean", "min"),
+      rain = list(total = "sum", max = "max")
+    )
+  )
+
+  expect_true(all(c(
+    "fda_rh_mean_2_4",
+    "fda_rh_min_2_4",
+    "fda_rain_total_2_4",
+    "fda_rain_max_2_4"
+  ) %in% names(features)))
+  expect_equal(features$fda_rain_total_2_4[features$site_id == "S01"], 1.2)
+
+  subset_features <- extract_fda_features(
+    analysis,
+    alpha = 0.05,
+    value_cols = "rh",
+    statistics = list(
+      rh = "mean",
+      rain = "sum"
+    )
+  )
+
+  expect_true("fda_rh_mean_2_4" %in% names(subset_features))
+  expect_false("fda_rain_sum_2_4" %in% names(subset_features))
+})
+
 test_that("fit_fda_group_model fits pffr models from FDA workflow objects", {
   skip_if_not_installed("fdatest")
   skip_if_not_installed("refund")

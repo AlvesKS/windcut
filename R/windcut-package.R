@@ -8,3 +8,22 @@
 #' @keywords internal
 "_PACKAGE"
 
+utils::globalVariables(c(
+  "corrected_p_value",
+  "difference",
+  "end",
+  "estimate",
+  "group",
+  "label",
+  "lower",
+  "mean_value",
+  "relative_end",
+  "relative_start",
+  "start",
+  "time",
+  "timing",
+  "upper",
+  "variable_label",
+  "width"
+))
+

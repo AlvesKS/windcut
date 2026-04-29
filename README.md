@@ -48,21 +48,35 @@ pak::pak("AlvesKS/windcut")
 ```r
 library(windcut)
 
-weather <- example_weather_data()
-windows <- make_windows(min_offset = -20, max_offset = -1, width = 5, reference_col = "assessment_time")
+weather <- window_pane_demo_data$weather_daily
+assessments <- window_pane_demo_data$assessments
 
-assessments <- data.frame(
-  assessment_id = c("A1", "A2"),
-  assessment_time = as.POSIXct(c("2024-01-20", "2024-01-25"), tz = "UTC"),
-  disease_intensity = c(12.5, 18.0)
+windows <- make_windows(
+  min_offset = -21,
+  max_offset = 0,
+  width = 7,
+  reference_col = "assessment_time"
 )
 
 features <- window_pane(
   weather = weather,
   assessments = assessments,
-  id_col = "assessment_id",
+  id_col = "site_id",
   response_col = "disease_intensity",
-  windows = windows
+  windows = windows,
+  reference_col = "assessment_time",
+  weather_cols = c(
+    "daily_mean_temp",
+    "daily_mean_rh",
+    "daily_sum_rain",
+    "daily_sum_leaf_wetness"
+  ),
+  statistics = list(
+    daily_mean_temp = c("mean", "max"),
+    daily_mean_rh = list(humid_days = count_at_or_above(90)),
+    daily_sum_rain = list(total = "sum"),
+    daily_sum_leaf_wetness = list(wet_days = count_above(0))
+  )
 )
 
 ranked <- screen_window_features(
@@ -76,6 +90,60 @@ less_redundant <- screen_feature_correlations(
   exclude_cols = c("site_id", "assessment_time", "disease_intensity"),
   method = "spearman",
   threshold = 0.8
+)
+```
+
+## Biologically meaningful weather summaries
+
+`statistics` can use ordinary R summary names, custom functions, and
+multivariable conditions. This lets you create predictors such as humid
+observations, temperature-range exposure, rain events, wetness spells, and
+infection-favorable periods.
+
+```r
+weather <- simulate_weather_series()
+
+weather <- weather |>
+  derive_vpd(temp, rh) |>
+  derive_leaf_wetness_from_rh(rh, threshold = 90)
+
+summary_statistics <- list(
+  temp = list(
+    mean = "mean",
+    max = "max",
+    hours_18_26 = count_between(18, 26),
+    degree_hours_10 = degree_hours_above(10)
+  ),
+  rh = list(
+    mean = "mean",
+    humid_hours = humid_hours(90),
+    prop_humid = proportion_at_or_above(90)
+  ),
+  rain = list(
+    total = "sum",
+    rainy_hours = rainy_hours(0),
+    rain_events = rain_events(0.2)
+  ),
+  leaf_wetness_est = list(
+    wet_hours = wet_hours(0),
+    max_wet_spell = max_consecutive_wet_hours(0)
+  ),
+  .conditions = list(
+    favorable_hours = count_when(temp >= 18 & temp <= 26 & rh >= 90),
+    max_favorable_spell = max_consecutive_when(temp >= 18 & temp <= 26 & rh >= 90),
+    warm_rain_total = sum_when(rain, temp >= 18 & temp <= 28)
+  )
+)
+
+windows <- make_windows(min_offset = -72, max_offset = 0, width = 24, reference_col = "assessment_time")
+assessments <- simulate_assessment_data(weather)
+
+features <- window_pane(
+  weather = weather,
+  assessments = assessments,
+  windows = windows,
+  reference_col = "assessment_time",
+  statistics = summary_statistics
 )
 ```
 
@@ -97,15 +165,16 @@ metric-window combination, such as:
 
 - `temp_mean_window_m03_z00`
 - `rain_sum_window_m05_z00`
-- `rh_days_ge_90_window_m10_m05`
+- `rh_days_at_or_above_90_window_m10_m05`
 
-## Current metrics
+## Current summaries
 
-- mean, minimum, and maximum temperature
-- cumulative rainfall
-- mean relative humidity
-- hours above a relative humidity threshold
-- cumulative leaf wetness
+- threshold counts and proportions
+- conditional sums and means
+- thermal accumulation
+- rain-event summaries
+- wetness and humidity spell summaries
+- multivariable disease-favorable conditions
 
 ## Current selection functions
 
@@ -124,7 +193,6 @@ metric-window combination, such as:
 ## Roadmap
 
 - infection risk indices
-- aggregation by hourly or daily resolution
 - window selection functions for modeling workflows
 
 

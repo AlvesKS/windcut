@@ -2,12 +2,14 @@ pandoc: '3.4'
 pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
+  biological-weather-summaries: biological-weather-summaries.html
   daily-weather-aggregation: daily-weather-aggregation.html
   feature-screening: feature-screening.html
   functional-data-analysis: functional-data-analysis.html
   getting-started: getting-started.html
+  multivariable-favorability: multivariable-favorability.html
   window-pane-workflow: window-pane-workflow.html
-last_built: 2026-04-25T23:16Z
+last_built: 2026-04-29T00:57Z
 urls:
   reference: https://alvesks.github.io/windcut/reference
   article: https://alvesks.github.io/windcut/articles

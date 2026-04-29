@@ -5,7 +5,9 @@
 \format{
 A list with three components:
 \describe{
-\item{weather_daily}{Daily weather curves for multiple simulated sites.}
+\item{weather_daily}{Daily weather curves for multiple simulated sites, using
+the \code{daily_<statistic>_<variable>} naming style used in the window-pane
+tutorials.}
 \item{assessments}{One binary disease assessment per site with \code{wm} and
 \code{wm_class}.}
 \item{variable_specs}{A data frame of FDA variable names and display labels.}

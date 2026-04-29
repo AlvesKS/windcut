@@ -1,16 +1,18 @@
 Package: windcut
 Title: Weather Time Series Feature Engineering for Plant Disease Epidemiology
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person(given = "Kaique S.",
            family = "Alves",
            role = c("aut", "cre"),
-           email = "kaique.alves@example.com")
+           email = "kaiquedsalves@gmail.com",
+           comment = c(ORCID = "0000-0001-9187-0252"))
 Description: Tools for transforming weather time series into model-ready
-    features for plant disease epidemiology. The package emphasizes
-    relative-time window analysis, allowing users to scan candidate
-    time windows around biological reference dates and compute biologically
-    interpretable weather summaries.
+    features for plant disease epidemiology. The package supports
+    relative-time window panes around biological reference dates,
+    biologically interpretable weather summaries, feature screening, and
+    functional data analysis workflows for comparing weather trajectories
+    between disease classes.
 License: MIT + file LICENSE
 URL: https://github.com/AlvesKS/windcut, https://alvesks.github.io/windcut/
 BugReports: https://github.com/AlvesKS/windcut/issues

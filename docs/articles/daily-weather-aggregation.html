@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">windcut</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,8 @@
     <li><h6 class="dropdown-header" data-toc-skip>Tutorials</h6></li>
     <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with windcut</a></li>
     <li><a class="dropdown-item" href="../articles/daily-weather-aggregation.html">Daily Weather Aggregation</a></li>
+    <li><a class="dropdown-item" href="../articles/biological-weather-summaries.html">Deriving biologically meaningful weather summaries</a></li>
+    <li><a class="dropdown-item" href="../articles/multivariable-favorability.html">Summarizing multivariable disease-favorable conditions</a></li>
     <li><a class="dropdown-item" href="../articles/window-pane-workflow.html">Window-Pane Workflow</a></li>
     <li><a class="dropdown-item" href="../articles/feature-screening.html">Feature Screening for Disease Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/functional-data-analysis.html">Functional Data Analysis for Weather Series</a></li>
@@ -806,6 +808,119 @@ maximum hourly rainfall; and leaf wetness gets wet hours.</p>
 </table>
 </div>
 <div class="section level3">
+<h3 id="summarize-daily-biological-conditions">Summarize daily biological conditions<a class="anchor" aria-label="anchor" href="#summarize-daily-biological-conditions"></a>
+</h3>
+<p>Daily aggregation can also count multivariable conditions within each
+day. This is useful when hourly records are available and the biological
+question is about how many hours per day were favorable. The example
+below counts warm and humid hours using <code>.conditions</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>daily_condition_stats <span class="ot">&lt;-</span> <span class="fu">aggregate_weather_daily</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">weather =</span> hourly_weather,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="at">temp =</span> <span class="st">"mean"</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    <span class="at">rh =</span> <span class="st">"mean"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>    <span class="at">.conditions =</span> <span class="fu">list</span>(</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>      <span class="at">favorable_hours =</span> <span class="fu">count_when</span>(temp <span class="sc">&gt;=</span> <span class="dv">18</span> <span class="sc">&amp;</span> temp <span class="sc">&lt;=</span> <span class="dv">26</span> <span class="sc">&amp;</span> rh <span class="sc">&gt;=</span> <span class="dv">90</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    )</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  )</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>daily_condition_stats <span class="sc">%&gt;%</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="fu">select</span>(site_id, date, daily_mean_temp, daily_mean_rh, daily_favorable_hours) <span class="sc">%&gt;%</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">8</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="11%">
+<col width="15%">
+<col width="22%">
+<col width="19%">
+<col width="30%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">site_id</th>
+<th align="left">date</th>
+<th align="right">daily_mean_temp</th>
+<th align="right">daily_mean_rh</th>
+<th align="right">daily_favorable_hours</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">S01</td>
+<td align="left">2023-12-01</td>
+<td align="right">22.33292</td>
+<td align="right">80.61750</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">S01</td>
+<td align="left">2023-12-02</td>
+<td align="right">22.67500</td>
+<td align="right">78.64167</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">S01</td>
+<td align="left">2023-12-03</td>
+<td align="right">23.35333</td>
+<td align="right">79.42042</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">S01</td>
+<td align="left">2023-12-04</td>
+<td align="right">23.39167</td>
+<td align="right">77.86875</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">S01</td>
+<td align="left">2023-12-05</td>
+<td align="right">23.13667</td>
+<td align="right">78.99000</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">S01</td>
+<td align="left">2023-12-06</td>
+<td align="right">22.63375</td>
+<td align="right">80.20750</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">S01</td>
+<td align="left">2023-12-07</td>
+<td align="right">22.24750</td>
+<td align="right">79.78875</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">S01</td>
+<td align="left">2023-12-08</td>
+<td align="right">21.59917</td>
+<td align="right">80.14833</td>
+<td align="right">2</td>
+</tr>
+</tbody>
+</table>
+<p>The plot below checks whether the condition behaves as expected
+through time. This is a useful quality-control step before the daily
+table is used in window-pane feature generation.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>daily_condition_stats <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(date, daily_favorable_hours)) <span class="sc">+</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">fill =</span> <span class="st">"#3f7d58"</span>, <span class="at">width =</span> <span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Daily favorable-hour counts from hourly records"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Favorable hours per day"</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">theme_half_open</span>()</span></code></pre></div>
+<p><img src="daily-weather-aggregation_files/figure-html/unnamed-chunk-10-1.png" alt="ggplot2 chart showing daily weather aggregation." width="672"></p>
+</div>
+<div class="section level3">
 <h3 id="use-non-standard-weather-column-names">Use non-standard weather-column names<a class="anchor" aria-label="anchor" href="#use-non-standard-weather-column-names"></a>
 </h3>
 <p>Field datasets often use names such as <code>temp2m</code>,
@@ -813,30 +928,30 @@ maximum hourly rainfall; and leaf wetness gets wet hours.</p>
 <code>weather_cols</code> to tell <code>windcut</code> which columns
 should be aggregated. The simplest approach is to pass the real column
 names and use those same names in <code>statistics</code>.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>custom_hourly <span class="ot">&lt;-</span> hourly_weather <span class="sc">%&gt;%</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    <span class="at">temp2m =</span> temp,</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="at">relhum =</span> rh,</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="at">prectot =</span> rain</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sradiation =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="dv">600</span> <span class="sc">*</span> <span class="fu">sin</span>(<span class="fu">as.numeric</span>(<span class="fu">format</span>(time, <span class="st">"%H"</span>)) <span class="sc">/</span> <span class="dv">24</span> <span class="sc">*</span> pi)))</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>custom_daily <span class="ot">&lt;-</span> <span class="fu">aggregate_weather_daily</span>(</span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">weather =</span> custom_hourly,</span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  <span class="at">weather_cols =</span> <span class="fu">c</span>(<span class="st">"temp2m"</span>, <span class="st">"relhum"</span>, <span class="st">"prectot"</span>, <span class="st">"sradiation"</span>),</span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>    <span class="at">temp2m =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"max"</span>),</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    <span class="at">relhum =</span> <span class="st">"mean"</span>,</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="at">prectot =</span> <span class="st">"sum"</span>,</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="at">sradiation =</span> <span class="st">"sum"</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>  )</span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>)</span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a></span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>custom_daily <span class="sc">%&gt;%</span></span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>custom_hourly <span class="ot">&lt;-</span> hourly_weather <span class="sc">%&gt;%</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>    <span class="at">temp2m =</span> temp,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>    <span class="at">relhum =</span> rh,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="at">prectot =</span> rain</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sradiation =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="dv">600</span> <span class="sc">*</span> <span class="fu">sin</span>(<span class="fu">as.numeric</span>(<span class="fu">format</span>(time, <span class="st">"%H"</span>)) <span class="sc">/</span> <span class="dv">24</span> <span class="sc">*</span> pi)))</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>custom_daily <span class="ot">&lt;-</span> <span class="fu">aggregate_weather_daily</span>(</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  <span class="at">weather =</span> custom_hourly,</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>  <span class="at">weather_cols =</span> <span class="fu">c</span>(<span class="st">"temp2m"</span>, <span class="st">"relhum"</span>, <span class="st">"prectot"</span>, <span class="st">"sradiation"</span>),</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>    <span class="at">temp2m =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"max"</span>),</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>    <span class="at">relhum =</span> <span class="st">"mean"</span>,</span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>    <span class="at">prectot =</span> <span class="st">"sum"</span>,</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>    <span class="at">sradiation =</span> <span class="st">"sum"</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  )</span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>)</span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>custom_daily <span class="sc">%&gt;%</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="6%">
@@ -925,27 +1040,27 @@ names and use those same names in <code>statistics</code>.</p>
 <code>weather_cols</code> vector. The names on the left become the names
 used in <code>statistics</code> and in the output columns; the names on
 the right are the columns in the original dataset.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>custom_daily_short_names <span class="ot">&lt;-</span> <span class="fu">aggregate_weather_daily</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">weather =</span> custom_hourly,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">weather_cols =</span> <span class="fu">c</span>(</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>    <span class="at">air_temp =</span> <span class="st">"temp2m"</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="at">humidity =</span> <span class="st">"relhum"</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    <span class="at">rain =</span> <span class="st">"prectot"</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    <span class="at">solar =</span> <span class="st">"sradiation"</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  ),</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>    <span class="at">air_temp =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"max"</span>),</span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>    <span class="at">humidity =</span> <span class="st">"mean"</span>,</span>
-<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>    <span class="at">rain =</span> <span class="st">"sum"</span>,</span>
-<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>    <span class="at">solar =</span> <span class="st">"sum"</span></span>
-<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>  )</span>
-<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>)</span>
-<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a></span>
-<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>custom_daily_short_names <span class="sc">%&gt;%</span></span>
-<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
-<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>custom_daily_short_names <span class="ot">&lt;-</span> <span class="fu">aggregate_weather_daily</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">weather =</span> custom_hourly,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">weather_cols =</span> <span class="fu">c</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="at">air_temp =</span> <span class="st">"temp2m"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    <span class="at">humidity =</span> <span class="st">"relhum"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="at">rain =</span> <span class="st">"prectot"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>    <span class="at">solar =</span> <span class="st">"sradiation"</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  ),</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    <span class="at">air_temp =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"max"</span>),</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    <span class="at">humidity =</span> <span class="st">"mean"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>    <span class="at">rain =</span> <span class="st">"sum"</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>    <span class="at">solar =</span> <span class="st">"sum"</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  )</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>)</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>custom_daily_short_names <span class="sc">%&gt;%</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="6%">
@@ -1038,25 +1153,25 @@ the right are the columns in the original dataset.</p>
 generation. This is a simple way to catch unit mistakes, unexpected
 missing periods, or daily statistics that do not match the biology of
 the disease.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>plot_daily <span class="ot">&lt;-</span> daily_weather <span class="sc">%&gt;%</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fu">select</span>(site_id, date, daily_mean_temp, daily_mean_rh, daily_sum_rain, daily_sum_leaf_wetness) <span class="sc">%&gt;%</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(daily_mean_temp, daily_mean_rh, daily_sum_rain, daily_sum_leaf_wetness),</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"variable"</span>,</span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"value"</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  )</span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">ggplot</span>(plot_daily, <span class="fu">aes</span>(date, value)) <span class="sc">+</span></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#3f7d58"</span>, <span class="at">linewidth =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> variable, <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Daily weather after aggregation"</span>,</span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>    <span class="at">y =</span> <span class="cn">NULL</span></span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">theme_half_open</span>()</span></code></pre></div>
-<p><img src="daily-weather-aggregation_files/figure-html/unnamed-chunk-11-1.png" alt="ggplot2 chart showing daily weather aggregation." width="672"></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>plot_daily <span class="ot">&lt;-</span> daily_weather <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  <span class="fu">filter</span>(site_id <span class="sc">==</span> site_id[<span class="dv">1</span>]) <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="fu">select</span>(site_id, date, daily_mean_temp, daily_mean_rh, daily_sum_rain, daily_sum_leaf_wetness) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(daily_mean_temp, daily_mean_rh, daily_sum_rain, daily_sum_leaf_wetness),</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"variable"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"value"</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  )</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="fu">ggplot</span>(plot_daily, <span class="fu">aes</span>(date, value)) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#3f7d58"</span>, <span class="at">linewidth =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> variable, <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Daily weather after aggregation"</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>    <span class="at">y =</span> <span class="cn">NULL</span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">theme_half_open</span>()</span></code></pre></div>
+<p><img src="daily-weather-aggregation_files/figure-html/unnamed-chunk-13-1.png" alt="ggplot2 chart showing daily weather aggregation." width="672"></p>
 </div>
 <div class="section level3">
 <h3 id="use-the-daily-data-in-the-window-pane-workflow">Use the daily data in the window-pane workflow<a class="anchor" aria-label="anchor" href="#use-the-daily-data-in-the-window-pane-workflow"></a>
@@ -1065,32 +1180,32 @@ the disease.</p>
 Negative offsets create windows before the reference date, positive
 offsets create windows after the reference date, and mixed offsets
 create windows around the reference date.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>windows <span class="ot">&lt;-</span> <span class="fu">make_windows</span>(</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">min_offset =</span> <span class="sc">-</span><span class="dv">21</span>,</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">max_offset =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">5</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">reference_col =</span> <span class="st">"assessment_time"</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>)</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>features <span class="ot">&lt;-</span> <span class="fu">window_pane</span>(</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">weather =</span> daily_weather,</span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">assessments =</span> window_pane_demo_data<span class="sc">$</span>assessments,</span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="at">windows =</span> windows,</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="at">response_col =</span> <span class="st">"disease_intensity"</span>,</span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="at">weather_cols =</span> <span class="fu">c</span>(</span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>    <span class="at">temp =</span> <span class="st">"daily_mean_temp"</span>,</span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    <span class="at">rh =</span> <span class="st">"daily_mean_rh"</span>,</span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>    <span class="at">rain =</span> <span class="st">"daily_sum_rain"</span>,</span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>    <span class="at">leaf_wetness =</span> <span class="st">"daily_sum_leaf_wetness"</span></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  ),</span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>  <span class="at">unit =</span> <span class="st">"days"</span></span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>)</span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>features <span class="sc">%&gt;%</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>windows <span class="ot">&lt;-</span> <span class="fu">make_windows</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="at">min_offset =</span> <span class="sc">-</span><span class="dv">21</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">max_offset =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">5</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">reference_col =</span> <span class="st">"assessment_time"</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>)</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>features <span class="ot">&lt;-</span> <span class="fu">window_pane</span>(</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">weather =</span> daily_weather,</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="at">assessments =</span> window_pane_demo_data<span class="sc">$</span>assessments,</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>  <span class="at">windows =</span> windows,</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">"site_id"</span>,</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>  <span class="at">response_col =</span> <span class="st">"disease_intensity"</span>,</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>  <span class="at">weather_cols =</span> <span class="fu">c</span>(</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>    <span class="at">temp =</span> <span class="st">"daily_mean_temp"</span>,</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>    <span class="at">rh =</span> <span class="st">"daily_mean_rh"</span>,</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>    <span class="at">rain =</span> <span class="st">"daily_sum_rain"</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>    <span class="at">leaf_wetness =</span> <span class="st">"daily_sum_leaf_wetness"</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>  ),</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>  <span class="at">unit =</span> <span class="st">"days"</span></span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>)</span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>features <span class="sc">%&gt;%</span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="3%">

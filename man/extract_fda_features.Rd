@@ -24,7 +24,9 @@ first alpha value stored in \code{analysis} is used.}
 \item{prefix}{Prefix used in feature names.}
 
 \item{statistics}{Interval statistics to compute. Use function names such as
-\code{"mean"}, \code{"sd"}, and \code{"IQR"}, or a named list of custom functions.}
+\code{"mean"}, \code{"sd"}, and \code{"IQR"}, a named list of custom functions, or a named
+list by variable. When using a variable-level list, \code{.default} can supply
+statistics for variables not named explicitly.}
 }
 \value{
 A wide data frame with one row per subject and one column per

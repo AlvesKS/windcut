@@ -296,13 +296,13 @@ test_that("threshold counts are regular statistics", {
     reference_time = as.POSIXct("2024-01-10 00:00:00", tz = "UTC"),
     windows = windows,
     statistics = list(
-      rh = list(hours_ge_90 = count_ge(90))
+      rh = list(hours_at_or_above_90 = count_at_or_above(90))
     )
   )
 
-  expect_true("rh_hours_ge_90" %in% names(scanned))
-  expect_true(all(scanned$rh_hours_ge_90 >= 0, na.rm = TRUE))
-  expect_error(count_ge(NA_real_), "`threshold` must be a single finite number")
+  expect_true("rh_hours_at_or_above_90" %in% names(scanned))
+  expect_true(all(scanned$rh_hours_at_or_above_90 >= 0, na.rm = TRUE))
+  expect_error(count_at_or_above(NA_real_), "`threshold` must be a single finite number")
 })
 
 test_that("window_pane can use site-specific reference dates", {

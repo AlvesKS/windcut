@@ -26,9 +26,6 @@
 #' @param leaf_wetness_col Name of the leaf wetness column.
 #' @param unit Time unit for relative-time windows. One of `"days"` or
 #'   `"hours"`.
-#' @param rh_threshold Optional threshold value retained in the API. Threshold
-#'   counts are computed through `statistics`, for example
-#'   `list(rh = list(days_ge_90 = count_ge(90)))`.
 #' @param statistics Summary statistics passed to [summarise_weather_window()].
 #'
 #' @return A wide data frame with one row per reference event.
@@ -47,7 +44,6 @@ window_pane <- function(
     rain_col = "rain",
     leaf_wetness_col = "leaf_wetness",
     unit = c("days", "hours"),
-    rh_threshold = 90,
     statistics = list(
       temp = c("mean", "min", "max"),
       rh = "mean",
@@ -56,12 +52,25 @@ window_pane <- function(
     )
 ) {
   unit <- match.arg(unit)
-  weather_cols <- .resolve_weather_cols(
+  weather_cols_was_null <- is.null(weather_cols)
+  if (weather_cols_was_null && .statistics_condition_only(statistics)) {
+    weather_cols <- stats::setNames(character(), character())
+  } else if (is.character(weather_cols) && length(weather_cols) == 0) {
+    weather_cols <- stats::setNames(character(), character())
+  } else {
+    weather_cols <- .resolve_weather_cols(
+      weather_cols,
+      temp_col = temp_col,
+      rh_col = rh_col,
+      rain_col = rain_col,
+      leaf_wetness_col = leaf_wetness_col
+    )
+  }
+  weather_cols <- .extend_weather_cols_from_statistics(
     weather_cols,
-    temp_col = temp_col,
-    rh_col = rh_col,
-    rain_col = rain_col,
-    leaf_wetness_col = leaf_wetness_col
+    statistics,
+    names(weather),
+    replace_defaults = weather_cols_was_null
   )
 
   if (!is.data.frame(assessments)) {
@@ -113,7 +122,6 @@ window_pane <- function(
       rain_col = rain_col,
       leaf_wetness_col = leaf_wetness_col,
       unit = unit,
-      rh_threshold = rh_threshold,
       statistics = statistics
     )
 

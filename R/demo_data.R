@@ -25,7 +25,9 @@
 #' A bundled dataset for the functional data analysis tutorial. The object is a
 #' named list with three components:
 #'
-#' - `weather_daily`: daily weather curves for multiple simulated sites.
+#' - `weather_daily`: daily weather curves for multiple simulated sites, using
+#'   the same `daily_<statistic>_<variable>` naming style used in the
+#'   window-pane tutorials.
 #' - `assessments`: one binary disease assessment per site with `wm` and
 #'   `wm_class`.
 #' - `variable_specs`: a small lookup table of FDA variables and display labels.

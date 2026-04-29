@@ -9,9 +9,12 @@ summarise_weather_window(
   rh_col = "rh",
   rain_col = "rain",
   leaf_wetness_col = "leaf_wetness",
-  rh_threshold = 90,
-  statistics = list(temp = c("mean", "min", "max"), rh = "mean", rain = "sum", leaf_wetness =
-    "sum")
+  statistics = list(
+    temp = c("mean", "min", "max"),
+    rh = "mean",
+    rain = "sum",
+    leaf_wetness = "sum"
+  )
 )
 }
 \arguments{
@@ -28,14 +31,14 @@ named, the names are used in the output feature names.}
 
   \item{leaf_wetness_col}{Name of the leaf wetness column.}
 
-\item{rh_threshold}{Optional threshold value retained in the API. Threshold
-counts are computed through \code{statistics}, for example
-\code{list(rh = list(days_ge_90 = count_ge(90)))}.}
-
   \item{statistics}{Summary statistics to compute. Use a character vector to
 apply the same statistics to all \code{weather_cols}, such as
 \code{c("mean", "sd", "IQR")}. Use a named list to choose statistics by
-variable or to provide custom named functions.}
+variable or to provide custom named functions. Use \code{.conditions} for
+multivariable condition summaries such as
+\code{count_when(temp >= 18 & rh >= 90)}. Threshold summaries should be
+specified here, for example
+\code{list(rh = list(days_at_or_above_90 = count_at_or_above(90)))}.}
 }
 \value{
 A one-row data frame with summary metrics.

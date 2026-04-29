@@ -21,7 +21,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Kaique S. Alves \email{kaique.alves@example.com}
+\strong{Maintainer}: Kaique S. Alves \email{kaiquedsalves@gmail.com} (\href{https://orcid.org/0000-0001-9187-0252}{ORCID})
 
 }
 \keyword{internal}

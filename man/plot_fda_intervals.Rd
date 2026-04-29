@@ -8,7 +8,7 @@ plot_fda_intervals(
   analysis,
   alpha = NULL,
   show_none = TRUE,
-  title = "Significant functional intervals by weather variable",
+  title = "Significant FDA intervals",
   xlab = "Time"
 )
 }

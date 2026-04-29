@@ -10,13 +10,6 @@ models of disease intensity.
 
 ::: {.grid-cards}
 ::: {.feature-card}
-### Simulate
-
-Create realistic hourly weather series and synthetic assessment data for
-teaching, testing, and early method development.
-:::
-
-::: {.feature-card}
 ### Slice
 
 Generate many candidate windows relative to a user-chosen reference date using
@@ -48,29 +41,37 @@ correction, then reduce highly correlated predictors before downstream modeling.
 
 ## Quick start
 
-The quick start shows the complete process in compact form. First simulate
-weather for several sites, then create one disease assessment per site, define
-sliding weather windows, build model-ready predictors, rank features against
-the response, and finally identify a less redundant predictor set for modeling.
+The quick start uses the bundled demo dataset. It loads daily weather and one
+disease assessment per site, defines sliding weather windows, builds
+model-ready predictors, ranks features against the response, and identifies a
+less redundant predictor set for modeling.
 
 ```r
 library(windcut)
 
-weather <- simulate_weather_series(
-  days = 60,
-  n_series = 8,
-  id_col = "site_id",
-  seed = 40
+data(window_pane_demo_data)
+
+weather <- window_pane_demo_data$weather
+assessments <- window_pane_demo_data$assessments
+
+windows <- make_windows(
+  min_offset = -21,
+  max_offset = 0,
+  width = 7,
+  reference_col = "assessment_time"
 )
-assessments <- simulate_assessment_data(weather, id_col = "site_id", seed = 42)
-windows <- make_windows(min_offset = -21, max_offset = -1, width = 5, reference_col = "assessment_time")
 
 features <- window_pane(
   weather = weather,
   assessments = assessments,
   windows = windows,
   id_col = "site_id",
-  response_col = "disease_intensity"
+  response_col = "disease_intensity",
+  statistics = list(
+    daily_mean_temp = list(mean = "mean", days_18_26 = count_between(18, 26)),
+    daily_mean_rh = list(mean = "mean", humid_days = humid_hours(90)),
+    daily_sum_rain = list(total = "sum")
+  )
 )
 
 screened <- screen_window_features(

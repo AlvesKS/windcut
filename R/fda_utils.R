@@ -533,7 +533,7 @@ plot_fda_intervals <- function(
     analysis,
     alpha = NULL,
     show_none = TRUE,
-    title = "Significant functional intervals by weather variable",
+    title = "Significant FDA intervals",
     xlab = "Time"
 ) {
   .check_fda_analysis(analysis)
@@ -583,7 +583,8 @@ plot_fda_intervals <- function(
         ggplot2::aes(x = x_position, y = variable_label, label = "no significant interval"),
         inherit.aes = FALSE,
         color = "gray45",
-        size = 3.3
+        size = 3.3,
+        hjust = 0
       )
     }
   }
@@ -603,7 +604,9 @@ plot_fda_intervals <- function(
 #' @param value_cols Optional subset of weather variables to extract.
 #' @param prefix Prefix used in feature names.
 #' @param statistics Interval statistics to compute. Use function names such as
-#'   `"mean"`, `"sd"`, and `"IQR"`, or a named list of custom functions.
+#'   `"mean"`, `"sd"`, and `"IQR"`, a named list of custom functions, or a named
+#'   list by variable. When using a variable-level list, `.default` can supply
+#'   statistics for variables not named explicitly.
 #'
 #' @return A wide data frame with one row per subject and one column per
 #'   extracted FDA feature.
@@ -647,8 +650,13 @@ extract_fda_features <- function(
     return(out)
   }
 
+  statistics_by_variable <- .resolve_fda_feature_statistics(statistics, analysis$value_cols)
   for (value_col in unique(interval_rows$variable)) {
     intervals <- interval_rows[interval_rows$variable == value_col, c("start", "end"), drop = FALSE]
+    value_statistics <- statistics_by_variable[[value_col]]
+    if (length(value_statistics) == 0) {
+      next
+    }
     feature_prefix <- paste(prefix, value_col, sep = "_")
     features <- extract_interval_features(
       data = analysis$data,
@@ -657,7 +665,7 @@ extract_fda_features <- function(
       value_col = value_col,
       intervals = intervals,
       prefix = feature_prefix,
-      statistics = statistics
+      statistics = value_statistics
     )
     out <- merge(out, features, by = analysis$id_col, all.x = TRUE, sort = FALSE)
   }
@@ -1007,6 +1015,54 @@ extract_interval_features <- function(
 
 .resolve_interval_statistics <- function(statistics) {
   .resolve_statistic_spec(statistics)
+}
+
+.resolve_fda_feature_statistics <- function(statistics, value_cols) {
+  if (is.character(statistics) || is.function(statistics)) {
+    statistic_spec <- .resolve_interval_statistics(statistics)
+    return(stats::setNames(
+      rep(list(statistic_spec), length(value_cols)),
+      value_cols
+    ))
+  }
+
+  if (!is.list(statistics) || is.null(names(statistics)) || any(!nzchar(names(statistics)))) {
+    stop("`statistics` must be a character vector, a function, or a named list.", call. = FALSE)
+  }
+
+  statistic_names <- names(statistics)
+  variable_level <- any(statistic_names %in% value_cols) || ".default" %in% statistic_names
+  if (!variable_level) {
+    statistic_spec <- .resolve_interval_statistics(statistics)
+    return(stats::setNames(
+      rep(list(statistic_spec), length(value_cols)),
+      value_cols
+    ))
+  }
+
+  unknown_variables <- setdiff(statistic_names, c(value_cols, ".default"))
+  if (length(unknown_variables) > 0) {
+    stop(
+      sprintf("Unknown weather variables in `statistics`: %s.", paste(unknown_variables, collapse = ", ")),
+      call. = FALSE
+    )
+  }
+
+  default_statistics <- if (".default" %in% statistic_names) {
+    .resolve_interval_statistics(statistics[[".default"]])
+  } else {
+    list()
+  }
+
+  out <- lapply(value_cols, function(value_col) {
+    selected <- statistics[[value_col]]
+    if (is.null(selected)) {
+      return(default_statistics)
+    }
+    .resolve_interval_statistics(selected)
+  })
+  names(out) <- value_cols
+  out
 }
 
 .collapse_consecutive_intervals <- function(values) {

@@ -23,7 +23,6 @@ reference:
     contents:
       - validate_weather_data
       - aggregate_weather_daily
-      - count_ge
       - make_windows
       - plot_window_pane
       - summarise_weather_window
@@ -31,6 +30,21 @@ reference:
       - window_pane
       - screen_window_features
       - screen_feature_correlations
+  - title: Summary functions
+    contents:
+      - threshold_summary_functions
+      - conditional_value_summary_functions
+      - thermal_time_functions
+      - weather_specific_summary_functions
+  - title: Spell functions
+    contents:
+      - spell_summary_functions
+  - title: Condition functions
+    contents:
+      - multivariable_condition_summary_functions
+  - title: Weather derivatives
+    contents:
+      - weather_derivative_functions
   - title: Simulation
     contents:
       - example_weather_data
@@ -62,6 +76,8 @@ articles:
     contents:
       - getting-started
       - daily-weather-aggregation
+      - biological-weather-summaries
+      - multivariable-favorability
       - window-pane-workflow
       - feature-screening
       - functional-data-analysis

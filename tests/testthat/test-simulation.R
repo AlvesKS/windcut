@@ -169,7 +169,15 @@ test_that("bundled demo datasets have expected structure", {
   expect_true(all(days_before_planting >= 30))
 
   expect_true(all(c("weather_daily", "assessments", "variable_specs") %in% names(fda_demo_data)))
-  expect_true(all(c("site_id", "dap", "rh", "rain", "leaf_wetness") %in% names(fda_demo_data$weather_daily)))
+  expect_true(all(c(
+    "site_id",
+    "dap",
+    "daily_mean_temp",
+    "daily_mean_rh",
+    "daily_sum_rain",
+    "daily_mean_leaf_wetness"
+  ) %in% names(fda_demo_data$weather_daily)))
+  expect_true(all(fda_demo_data$variable_specs$variable %in% names(fda_demo_data$weather_daily)))
   expect_true(all(c("site_id", "wm", "wm_class") %in% names(fda_demo_data$assessments)))
 })
 

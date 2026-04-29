@@ -8,6 +8,6 @@ The current package includes:
 - `window_pane_demo_data`
 - `fda_demo_data`
 
-These objects are created from the package's own simulation helpers so the
+These objects are created from the package's own simulation functions so the
 workflow vignettes can focus on analysis and interpretation instead of data
 construction.

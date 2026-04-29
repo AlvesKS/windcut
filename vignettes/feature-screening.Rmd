@@ -54,14 +54,16 @@ same-day weather.
 
 The daily weather column names are kept exactly as they appear in the data:
 `daily_mean_temp`, `daily_mean_rh`, `daily_sum_rain`, and
-`daily_sum_leaf_wetness`. The `statistics` list uses those same names, so the
-generated feature names show both the original daily variable and the window
-summary.
+`daily_sum_leaf_wetness`. We also derive `daily_vpd` from temperature and
+relative humidity to show that derived variables can be screened in the same
+workflow. The `statistics` list uses those column names, so the generated
+feature names show both the weather variable and the window summary.
 
 ```{r}
 data(window_pane_demo_data)
 
-weather <- window_pane_demo_data$weather
+weather <- window_pane_demo_data$weather |>
+  derive_vpd(daily_mean_temp, daily_mean_rh, name = "daily_vpd")
 assessments <- window_pane_demo_data$assessments
 
 windows <- make_windows(min_offset = -18, max_offset = -1, width = 5, reference_col = "assessment_time")
@@ -69,15 +71,22 @@ windows <- make_windows(min_offset = -18, max_offset = -1, width = 5, reference_
 daily_weather_cols <- c(
   "daily_mean_temp",
   "daily_mean_rh",
+  "daily_vpd",
   "daily_sum_rain",
   "daily_sum_leaf_wetness"
 )
 
 summary_statistics <- list(
-  daily_mean_temp = c("mean", "min", "max"),
-  daily_mean_rh = "mean",
-  daily_sum_rain = "sum",
-  daily_sum_leaf_wetness = "sum"
+  daily_mean_temp = list(mean = "mean", days_18_26 = count_between(18, 26)),
+  daily_mean_rh = list(mean = "mean", humid_days = humid_hours(90)),
+  daily_vpd = list(mean = "mean", dry_days = count_above(1.2)),
+  daily_sum_rain = list(total = "sum", rain_events = rain_events(0.2)),
+  daily_sum_leaf_wetness = list(wet_days = wet_days(0)),
+  .conditions = list(
+    favorable_days = count_when(
+      daily_mean_temp >= 18 & daily_mean_temp <= 26 & daily_mean_rh >= 90
+    )
+  )
 )
 
 features <- window_pane(

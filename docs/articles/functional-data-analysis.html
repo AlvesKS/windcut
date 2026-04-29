@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">windcut</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,8 @@
     <li><h6 class="dropdown-header" data-toc-skip>Tutorials</h6></li>
     <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with windcut</a></li>
     <li><a class="dropdown-item" href="../articles/daily-weather-aggregation.html">Daily Weather Aggregation</a></li>
+    <li><a class="dropdown-item" href="../articles/biological-weather-summaries.html">Deriving biologically meaningful weather summaries</a></li>
+    <li><a class="dropdown-item" href="../articles/multivariable-favorability.html">Summarizing multivariable disease-favorable conditions</a></li>
     <li><a class="dropdown-item" href="../articles/window-pane-workflow.html">Window-Pane Workflow</a></li>
     <li><a class="dropdown-item" href="../articles/feature-screening.html">Feature Screening for Disease Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/functional-data-analysis.html">Functional Data Analysis for Weather Series</a></li>
@@ -96,15 +98,16 @@ tutorial.</p>
 <div class="section level2">
 <h2 id="why-fda-in-windcut">Why FDA in <code>windcut</code>?<a class="anchor" aria-label="anchor" href="#why-fda-in-windcut"></a>
 </h2>
-<p>Window-pane analysis asks which summary windows are informative.
-Functional data analysis asks whether the full weather trajectory
+<p>Window-pane analysis stratifies a time series into user-defined
+windows and computes summary statistics inside each one. Functional data
+analysis asks a different question: whether the full weather trajectory
 differs between disease classes and, if so, where along the time axis
 that difference appears.</p>
 <p>This vignette is inspired by the functional data analysis and feature
-engineering strategy described by Alves et al. (2025). The package
-workflow is more general than the analysis in that paper: the user
-chooses the weather variables, smoothing method, p-value threshold, and
-number of permutations.</p>
+engineering strategy described by <a href="https://doi.org/10.1094/PHYTO-01-25-0008-FI" class="external-link">Alves et
+al. (2025)</a>. The package workflow is more general than the analysis
+in that paper: the user chooses the weather variables, smoothing method,
+p-value threshold, and number of permutations.</p>
 <p>The main user-facing function is <code>run_fda_analysis()</code>. It
 does the repetitive work that users should not have to code by hand:
 building subject-by-time matrices, computing smoothed group means,
@@ -164,12 +167,21 @@ binary white mold example.</p>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(weather_daily))</span></code></pre></div>
 <table class="table">
+<colgroup>
+<col width="11%">
+<col width="17%">
+<col width="15%">
+<col width="16%">
+<col width="26%">
+<col width="4%">
+<col width="8%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">time</th>
-<th align="right">temp</th>
-<th align="right">rh</th>
-<th align="right">rain</th>
-<th align="right">leaf_wetness</th>
+<th align="right">daily_mean_temp</th>
+<th align="right">daily_mean_rh</th>
+<th align="right">daily_sum_rain</th>
+<th align="right">daily_mean_leaf_wetness</th>
 <th align="right">dap</th>
 <th align="left">site_id</th>
 </tr></thead>
@@ -299,19 +311,19 @@ binary white mold example.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">temp</td>
+<td align="left">daily_mean_temp</td>
 <td align="left">Mean air temperature (deg C)</td>
 </tr>
 <tr class="even">
-<td align="left">rh</td>
+<td align="left">daily_mean_rh</td>
 <td align="left">Relative humidity (%)</td>
 </tr>
 <tr class="odd">
-<td align="left">rain</td>
+<td align="left">daily_sum_rain</td>
 <td align="left">Rainfall (mm day-1)</td>
 </tr>
 <tr class="even">
-<td align="left">leaf_wetness</td>
+<td align="left">daily_mean_leaf_wetness</td>
 <td align="left">Leaf wetness proportion</td>
 </tr>
 </tbody>
@@ -324,16 +336,24 @@ preparation: one row is one site at one time point.</p>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  subject_data <span class="sc">%&gt;%</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="fu">select</span>(site_id, dap, rh, rain, leaf_wetness, wm_class) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="fu">select</span>(site_id, dap, daily_mean_rh, daily_sum_rain, daily_mean_leaf_wetness, wm_class) <span class="sc">%&gt;%</span></span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">6</span>)</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span></code></pre></div>
 <table class="table">
+<colgroup>
+<col width="10%">
+<col width="5%">
+<col width="18%">
+<col width="20%">
+<col width="32%">
+<col width="12%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">site_id</th>
 <th align="right">dap</th>
-<th align="right">rh</th>
-<th align="right">rain</th>
-<th align="right">leaf_wetness</th>
+<th align="right">daily_mean_rh</th>
+<th align="right">daily_sum_rain</th>
+<th align="right">daily_mean_leaf_wetness</th>
 <th align="left">wm_class</th>
 </tr></thead>
 <tbody>
@@ -436,13 +456,13 @@ code for them.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fda_fit<span class="sc">$</span>interval_summary)</span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="13%">
-<col width="30%">
-<col width="6%">
-<col width="13%">
-<col width="6%">
-<col width="4%">
-<col width="25%">
+<col width="22%">
+<col width="27%">
+<col width="5%">
+<col width="12%">
+<col width="5%">
+<col width="3%">
+<col width="22%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">variable</th>
@@ -455,7 +475,7 @@ code for them.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">temp</td>
+<td align="left">daily_mean_temp</td>
 <td align="left">Mean air temperature (deg C)</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -464,7 +484,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="even">
-<td align="left">temp</td>
+<td align="left">daily_mean_temp</td>
 <td align="left">Mean air temperature (deg C)</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -473,7 +493,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="odd">
-<td align="left">temp</td>
+<td align="left">daily_mean_temp</td>
 <td align="left">Mean air temperature (deg C)</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -482,7 +502,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="even">
-<td align="left">temp</td>
+<td align="left">daily_mean_temp</td>
 <td align="left">Mean air temperature (deg C)</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -491,7 +511,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="odd">
-<td align="left">temp</td>
+<td align="left">daily_mean_temp</td>
 <td align="left">Mean air temperature (deg C)</td>
 <td align="right">0.01</td>
 <td align="left">alpha = 0.01</td>
@@ -500,7 +520,7 @@ code for them.</p>
 <td align="left">No significant interval</td>
 </tr>
 <tr class="even">
-<td align="left">rh</td>
+<td align="left">daily_mean_rh</td>
 <td align="left">Relative humidity (%)</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -509,7 +529,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="odd">
-<td align="left">rh</td>
+<td align="left">daily_mean_rh</td>
 <td align="left">Relative humidity (%)</td>
 <td align="right">0.01</td>
 <td align="left">alpha = 0.01</td>
@@ -518,7 +538,7 @@ code for them.</p>
 <td align="left">No significant interval</td>
 </tr>
 <tr class="even">
-<td align="left">rain</td>
+<td align="left">daily_sum_rain</td>
 <td align="left">Rainfall (mm day-1)</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -527,7 +547,7 @@ code for them.</p>
 <td align="left">No significant interval</td>
 </tr>
 <tr class="odd">
-<td align="left">rain</td>
+<td align="left">daily_sum_rain</td>
 <td align="left">Rainfall (mm day-1)</td>
 <td align="right">0.01</td>
 <td align="left">alpha = 0.01</td>
@@ -536,7 +556,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="even">
-<td align="left">leaf_wetness</td>
+<td align="left">daily_mean_leaf_wetness</td>
 <td align="left">Leaf wetness proportion</td>
 <td align="right">0.05</td>
 <td align="left">alpha = 0.05</td>
@@ -545,7 +565,7 @@ code for them.</p>
 <td align="left">Significant interval</td>
 </tr>
 <tr class="odd">
-<td align="left">leaf_wetness</td>
+<td align="left">daily_mean_leaf_wetness</td>
 <td align="left">Leaf wetness proportion</td>
 <td align="right">0.01</td>
 <td align="left">alpha = 0.01</td>
@@ -564,7 +584,7 @@ mean-curve plot shows the smoothed average trajectory for each disease
 class.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">plot_fda_means</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  fda_fit,</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"rh"</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"daily_mean_rh"</span>,</span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Days after planting"</span>,</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"Mean relative humidity (%)"</span>,</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">legend_title =</span> <span class="st">"White mold class"</span>,</span>
@@ -576,7 +596,7 @@ minus <code>wm-</code>. Positive values mean the <code>wm+</code> sites
 had higher relative humidity on those days.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">plot_fda_difference</span>(</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  fda_fit,</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"rh"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"daily_mean_rh"</span>,</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Days after planting"</span>,</span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"wm+ minus wm-"</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span></code></pre></div>
@@ -586,7 +606,7 @@ strongest. The dashed lines are the alpha thresholds chosen in
 <code>run_fda_analysis()</code>.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">plot_fda_p_values</span>(</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  fda_fit,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"rh"</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"daily_mean_rh"</span>,</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.01</span>),</span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Days after planting"</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>)</span></code></pre></div>
@@ -601,8 +621,9 @@ differ for that variable. Variables with no significant interval are
 labeled explicitly.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">plot_fda_intervals</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  fda_fit,</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Days relative to planting"</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">title =</span> <span class="st">"Significant FDA intervals by variable"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Days relative to planting"</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>)</span></code></pre></div>
 <p><img src="functional-data-analysis_files/figure-html/unnamed-chunk-9-1.png" alt="ggplot2 chart from the functional data analysis workflow." width="672"></p>
 <p>Using two alpha values is useful because the user can see how
 conservative thresholds change the candidate periods. In this example,
@@ -620,7 +641,7 @@ weather variable. The function below uses the groups already stored in
 vector manually.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>rh_model <span class="ot">&lt;-</span> <span class="fu">fit_fda_group_model</span>(</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  fda_fit,</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"rh"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">value_col =</span> <span class="st">"daily_mean_rh"</span>,</span>
 <span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">bs.yindex =</span> <span class="fu">list</span>(<span class="at">bs =</span> <span class="st">"ps"</span>, <span class="at">k =</span> <span class="dv">20</span>, <span class="at">m =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>)),</span>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">bs.int =</span> <span class="fu">list</span>(<span class="at">bs =</span> <span class="st">"ps"</span>, <span class="at">k =</span> <span class="dv">20</span>, <span class="at">m =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>))</span>
 <span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>)</span></code></pre></div>
@@ -643,8 +664,9 @@ humidity separates the two disease classes more strongly.</p>
 site-level predictors. The result is a regular data frame: one row per
 site and one column per interval-derived feature. The
 <code>statistics</code> argument controls how each significant interval
-is summarized for each site. Here we extract the interval mean and
-maximum.</p>
+is summarized for each site.</p>
+<p>When the same summaries make sense for every variable, give
+<code>statistics</code> as a character vector.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>fda_features <span class="ot">&lt;-</span> <span class="fu">extract_fda_features</span>(</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  fda_fit,</span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span>,</span>
@@ -653,36 +675,36 @@ maximum.</p>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>)</span>
 <span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a></span>
 <span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(fda_features))</span></code></pre></div>
-<table style="width:100%;" class="table">
+<table class="table">
 <colgroup>
-<col width="3%">
+<col width="2%">
+<col width="8%">
+<col width="7%">
+<col width="8%">
+<col width="7%">
+<col width="8%">
+<col width="7%">
+<col width="8%">
 <col width="7%">
 <col width="7%">
 <col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="6%">
-<col width="11%">
 <col width="10%">
+<col width="9%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">site_id</th>
-<th align="right">fda_temp_mean_24_34</th>
-<th align="right">fda_temp_max_24_34</th>
-<th align="right">fda_temp_mean_38_38</th>
-<th align="right">fda_temp_max_38_38</th>
-<th align="right">fda_temp_mean_40_41</th>
-<th align="right">fda_temp_max_40_41</th>
-<th align="right">fda_temp_mean_45_46</th>
-<th align="right">fda_temp_max_45_46</th>
-<th align="right">fda_rh_mean_26_46</th>
-<th align="right">fda_rh_max_26_46</th>
-<th align="right">fda_leaf_wetness_mean_31_38</th>
-<th align="right">fda_leaf_wetness_max_31_38</th>
+<th align="right">fda_daily_mean_temp_mean_24_34</th>
+<th align="right">fda_daily_mean_temp_max_24_34</th>
+<th align="right">fda_daily_mean_temp_mean_38_38</th>
+<th align="right">fda_daily_mean_temp_max_38_38</th>
+<th align="right">fda_daily_mean_temp_mean_40_41</th>
+<th align="right">fda_daily_mean_temp_max_40_41</th>
+<th align="right">fda_daily_mean_temp_mean_45_46</th>
+<th align="right">fda_daily_mean_temp_max_45_46</th>
+<th align="right">fda_daily_mean_rh_mean_26_46</th>
+<th align="right">fda_daily_mean_rh_max_26_46</th>
+<th align="right">fda_daily_mean_leaf_wetness_mean_31_38</th>
+<th align="right">fda_daily_mean_leaf_wetness_max_31_38</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -777,29 +799,327 @@ maximum.</p>
 </tr>
 </tbody>
 </table>
+<p>Different variables often need different summaries. For example,
+humidity may be represented by the interval mean and minimum, rainfall
+by the interval sum and maximum, and leaf wetness by the mean and total
+exposure. The <code>.default</code> entry is optional; it is used for
+variables not named explicitly.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>fda_features_by_variable <span class="ot">&lt;-</span> <span class="fu">extract_fda_features</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  fda_fit,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">prefix =</span> <span class="st">"fda"</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>    <span class="at">daily_mean_temp =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"min"</span>, <span class="st">"max"</span>),</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>    <span class="at">daily_mean_rh =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"min"</span>),</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>    <span class="at">daily_sum_rain =</span> <span class="fu">list</span>(<span class="at">total =</span> <span class="st">"sum"</span>, <span class="at">max =</span> <span class="st">"max"</span>),</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>    <span class="at">daily_mean_leaf_wetness =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">total =</span> <span class="st">"sum"</span>),</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>    <span class="at">.default =</span> <span class="st">"mean"</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  )</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(fda_features_by_variable))</span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="1%">
+<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="5%">
+<col width="5%">
+<col width="7%">
+<col width="7%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">site_id</th>
+<th align="right">fda_daily_mean_temp_mean_24_34</th>
+<th align="right">fda_daily_mean_temp_min_24_34</th>
+<th align="right">fda_daily_mean_temp_max_24_34</th>
+<th align="right">fda_daily_mean_temp_mean_38_38</th>
+<th align="right">fda_daily_mean_temp_min_38_38</th>
+<th align="right">fda_daily_mean_temp_max_38_38</th>
+<th align="right">fda_daily_mean_temp_mean_40_41</th>
+<th align="right">fda_daily_mean_temp_min_40_41</th>
+<th align="right">fda_daily_mean_temp_max_40_41</th>
+<th align="right">fda_daily_mean_temp_mean_45_46</th>
+<th align="right">fda_daily_mean_temp_min_45_46</th>
+<th align="right">fda_daily_mean_temp_max_45_46</th>
+<th align="right">fda_daily_mean_rh_mean_26_46</th>
+<th align="right">fda_daily_mean_rh_min_26_46</th>
+<th align="right">fda_daily_mean_leaf_wetness_mean_31_38</th>
+<th align="right">fda_daily_mean_leaf_wetness_total_31_38</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">S01</td>
+<td align="right">21.05262</td>
+<td align="right">19.64194</td>
+<td align="right">22.13569</td>
+<td align="right">20.01985</td>
+<td align="right">20.01985</td>
+<td align="right">20.01985</td>
+<td align="right">21.57944</td>
+<td align="right">21.19777</td>
+<td align="right">21.96110</td>
+<td align="right">21.51152</td>
+<td align="right">21.33569</td>
+<td align="right">21.68735</td>
+<td align="right">59.41861</td>
+<td align="right">57.70859</td>
+<td align="right">0.0000000</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">S02</td>
+<td align="right">20.86622</td>
+<td align="right">19.42448</td>
+<td align="right">22.06448</td>
+<td align="right">19.37115</td>
+<td align="right">19.37115</td>
+<td align="right">19.37115</td>
+<td align="right">21.15573</td>
+<td align="right">20.95740</td>
+<td align="right">21.35406</td>
+<td align="right">20.89052</td>
+<td align="right">20.52906</td>
+<td align="right">21.25198</td>
+<td align="right">60.86541</td>
+<td align="right">59.16125</td>
+<td align="right">0.0000000</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">S03</td>
+<td align="right">20.87441</td>
+<td align="right">19.63657</td>
+<td align="right">21.84199</td>
+<td align="right">19.50865</td>
+<td align="right">19.50865</td>
+<td align="right">19.50865</td>
+<td align="right">20.98032</td>
+<td align="right">20.49824</td>
+<td align="right">21.46240</td>
+<td align="right">21.08365</td>
+<td align="right">20.61074</td>
+<td align="right">21.55657</td>
+<td align="right">60.77538</td>
+<td align="right">59.03167</td>
+<td align="right">0.0000000</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">S04</td>
+<td align="right">20.93850</td>
+<td align="right">19.33138</td>
+<td align="right">22.44096</td>
+<td align="right">19.61763</td>
+<td align="right">19.61763</td>
+<td align="right">19.61763</td>
+<td align="right">20.82971</td>
+<td align="right">20.44638</td>
+<td align="right">21.21304</td>
+<td align="right">21.30804</td>
+<td align="right">20.67054</td>
+<td align="right">21.94554</td>
+<td align="right">59.99609</td>
+<td align="right">57.57827</td>
+<td align="right">0.0000000</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">S05</td>
+<td align="right">20.80815</td>
+<td align="right">19.39024</td>
+<td align="right">21.98649</td>
+<td align="right">19.90399</td>
+<td align="right">19.90399</td>
+<td align="right">19.90399</td>
+<td align="right">21.06940</td>
+<td align="right">20.65482</td>
+<td align="right">21.48399</td>
+<td align="right">20.95024</td>
+<td align="right">20.87940</td>
+<td align="right">21.02107</td>
+<td align="right">60.96851</td>
+<td align="right">59.36335</td>
+<td align="right">0.0074802</td>
+<td align="right">0.0598417</td>
+</tr>
+<tr class="even">
+<td align="left">S06</td>
+<td align="right">21.01271</td>
+<td align="right">19.47070</td>
+<td align="right">22.41320</td>
+<td align="right">20.14862</td>
+<td align="right">20.14862</td>
+<td align="right">20.14862</td>
+<td align="right">21.36737</td>
+<td align="right">21.04653</td>
+<td align="right">21.68820</td>
+<td align="right">21.31612</td>
+<td align="right">20.94570</td>
+<td align="right">21.68653</td>
+<td align="right">63.56811</td>
+<td align="right">61.32484</td>
+<td align="right">0.0079402</td>
+<td align="right">0.0635217</td>
+</tr>
+</tbody>
+</table>
+<p>Named functions can also be used when the statistic should have a
+biological interpretation beyond the usual mean, minimum, maximum, or
+sum.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>fda_features_biological <span class="ot">&lt;-</span> <span class="fu">extract_fda_features</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  fda_fit,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">prefix =</span> <span class="st">"fda"</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">statistics =</span> <span class="fu">list</span>(</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>    <span class="at">daily_mean_rh =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">humid_days =</span> <span class="fu">humid_hours</span>(<span class="dv">85</span>)),</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>    <span class="at">daily_mean_temp =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">days_18_26 =</span> <span class="fu">count_between</span>(<span class="dv">18</span>, <span class="dv">26</span>)),</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>    <span class="at">daily_sum_rain =</span> <span class="fu">list</span>(<span class="at">total =</span> <span class="st">"sum"</span>, <span class="at">rainy_days =</span> <span class="fu">rainy_days</span>(<span class="dv">0</span>))</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  )</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>)</span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(fda_features_biological))</span></code></pre></div>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="2%">
+<col width="9%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="8%">
+<col width="10%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">site_id</th>
+<th align="right">fda_daily_mean_temp_mean_24_34</th>
+<th align="right">fda_daily_mean_temp_days_18_26_24_34</th>
+<th align="right">fda_daily_mean_temp_mean_38_38</th>
+<th align="right">fda_daily_mean_temp_days_18_26_38_38</th>
+<th align="right">fda_daily_mean_temp_mean_40_41</th>
+<th align="right">fda_daily_mean_temp_days_18_26_40_41</th>
+<th align="right">fda_daily_mean_temp_mean_45_46</th>
+<th align="right">fda_daily_mean_temp_days_18_26_45_46</th>
+<th align="right">fda_daily_mean_rh_mean_26_46</th>
+<th align="right">fda_daily_mean_rh_humid_days_26_46</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">S01</td>
+<td align="right">21.05262</td>
+<td align="right">11</td>
+<td align="right">20.01985</td>
+<td align="right">1</td>
+<td align="right">21.57944</td>
+<td align="right">2</td>
+<td align="right">21.51152</td>
+<td align="right">2</td>
+<td align="right">59.41861</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">S02</td>
+<td align="right">20.86622</td>
+<td align="right">11</td>
+<td align="right">19.37115</td>
+<td align="right">1</td>
+<td align="right">21.15573</td>
+<td align="right">2</td>
+<td align="right">20.89052</td>
+<td align="right">2</td>
+<td align="right">60.86541</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">S03</td>
+<td align="right">20.87441</td>
+<td align="right">11</td>
+<td align="right">19.50865</td>
+<td align="right">1</td>
+<td align="right">20.98032</td>
+<td align="right">2</td>
+<td align="right">21.08365</td>
+<td align="right">2</td>
+<td align="right">60.77538</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">S04</td>
+<td align="right">20.93850</td>
+<td align="right">11</td>
+<td align="right">19.61763</td>
+<td align="right">1</td>
+<td align="right">20.82971</td>
+<td align="right">2</td>
+<td align="right">21.30804</td>
+<td align="right">2</td>
+<td align="right">59.99609</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">S05</td>
+<td align="right">20.80815</td>
+<td align="right">11</td>
+<td align="right">19.90399</td>
+<td align="right">1</td>
+<td align="right">21.06940</td>
+<td align="right">2</td>
+<td align="right">20.95024</td>
+<td align="right">2</td>
+<td align="right">60.96851</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">S06</td>
+<td align="right">21.01271</td>
+<td align="right">11</td>
+<td align="right">20.14862</td>
+<td align="right">1</td>
+<td align="right">21.36737</td>
+<td align="right">2</td>
+<td align="right">21.31612</td>
+<td align="right">2</td>
+<td align="right">63.56811</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
 <p>Those features can be joined to disease outcomes or other site-level
 covariates for downstream modeling. The plot below uses ggplot2 directly
 because this is a general modeling diagnostic, not part of the FDA
 algorithm itself.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>feature_name <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(fda_features), <span class="st">"site_id"</span>)[<span class="dv">1</span>]</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>feature_plot_data <span class="ot">&lt;-</span> fda_features <span class="sc">%&gt;%</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="fu">left_join</span>(assessments <span class="sc">%&gt;%</span> <span class="fu">select</span>(site_id, wm_class), <span class="at">by =</span> <span class="st">"site_id"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="fu">transmute</span>(site_id, wm_class, <span class="at">value =</span> .data[[feature_name]])</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="fu">ggplot</span>(feature_plot_data, <span class="fu">aes</span>(wm_class, value, <span class="at">fill =</span> wm_class, <span class="at">color =</span> wm_class)) <span class="sc">+</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  <span class="fu">geom_violin</span>(<span class="at">width =</span> <span class="fl">0.85</span>, <span class="at">alpha =</span> <span class="fl">0.22</span>, <span class="at">linewidth =</span> <span class="fl">0.4</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">width =</span> <span class="fl">0.18</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>, <span class="at">outlier.shape =</span> <span class="cn">NA</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>  <span class="fu">geom_jitter</span>(<span class="at">width =</span> <span class="fl">0.08</span>, <span class="at">alpha =</span> <span class="fl">0.55</span>, <span class="at">size =</span> <span class="fl">1.7</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"wm-"</span> <span class="ot">=</span> <span class="st">"#2b6c4f"</span>, <span class="st">"wm+"</span> <span class="ot">=</span> <span class="st">"#c47f2c"</span>)) <span class="sc">+</span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"wm-"</span> <span class="ot">=</span> <span class="st">"#2b6c4f"</span>, <span class="st">"wm+"</span> <span class="ot">=</span> <span class="st">"#c47f2c"</span>)) <span class="sc">+</span></span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Interval-derived FDA feature by binary disease class"</span>,</span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"White mold class"</span>,</span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>    <span class="at">y =</span> feature_name</span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">theme_half_open</span>()</span></code></pre></div>
-<p><img src="functional-data-analysis_files/figure-html/unnamed-chunk-13-1.png" alt="ggplot2 chart from the functional data analysis workflow." width="672"></p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>feature_name <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(fda_features), <span class="st">"site_id"</span>)[<span class="dv">1</span>]</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>feature_plot_data <span class="ot">&lt;-</span> fda_features <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="fu">left_join</span>(assessments <span class="sc">%&gt;%</span> <span class="fu">select</span>(site_id, wm_class), <span class="at">by =</span> <span class="st">"site_id"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>  <span class="fu">transmute</span>(site_id, wm_class, <span class="at">value =</span> .data[[feature_name]])</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="fu">ggplot</span>(feature_plot_data, <span class="fu">aes</span>(wm_class, value, <span class="at">fill =</span> wm_class, <span class="at">color =</span> wm_class)) <span class="sc">+</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>  <span class="fu">geom_violin</span>(<span class="at">width =</span> <span class="fl">0.85</span>, <span class="at">alpha =</span> <span class="fl">0.22</span>, <span class="at">linewidth =</span> <span class="fl">0.4</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">width =</span> <span class="fl">0.18</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>, <span class="at">outlier.shape =</span> <span class="cn">NA</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="fu">geom_jitter</span>(<span class="at">width =</span> <span class="fl">0.08</span>, <span class="at">alpha =</span> <span class="fl">0.55</span>, <span class="at">size =</span> <span class="fl">1.7</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"wm-"</span> <span class="ot">=</span> <span class="st">"#2b6c4f"</span>, <span class="st">"wm+"</span> <span class="ot">=</span> <span class="st">"#c47f2c"</span>)) <span class="sc">+</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"wm-"</span> <span class="ot">=</span> <span class="st">"#2b6c4f"</span>, <span class="st">"wm+"</span> <span class="ot">=</span> <span class="st">"#c47f2c"</span>)) <span class="sc">+</span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Interval-derived FDA feature by binary disease class"</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"White mold class"</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>    <span class="at">y =</span> feature_name</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">theme_half_open</span>()</span></code></pre></div>
+<p><img src="functional-data-analysis_files/figure-html/unnamed-chunk-15-1.png" alt="ggplot2 chart from the functional data analysis workflow." width="672"></p>
 </div>
 <div class="section level3">
 <h3 id="what-the-workflow-gives-the-user">What the workflow gives the user<a class="anchor" aria-label="anchor" href="#what-the-workflow-gives-the-user"></a>

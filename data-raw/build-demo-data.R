@@ -60,10 +60,10 @@ build_demo_site <- function(i, site_profile) {
     dplyr::mutate(day = as.Date(time)) %>%
     dplyr::group_by(day) %>%
     dplyr::summarise(
-      temp = mean(temp),
-      rh = mean(rh),
-      rain = sum(rain),
-      leaf_wetness = mean(leaf_wetness),
+      daily_mean_temp = mean(temp),
+      daily_mean_rh = mean(rh),
+      daily_sum_rain = sum(rain),
+      daily_mean_leaf_wetness = mean(leaf_wetness),
       .groups = "drop"
     ) %>%
     dplyr::mutate(
@@ -71,20 +71,32 @@ build_demo_site <- function(i, site_profile) {
       dap = -30:50,
       site_id = sprintf("S%02d", i)
     ) %>%
-    dplyr::select(time, temp, rh, rain, leaf_wetness, dap, site_id)
+    dplyr::select(
+      time,
+      daily_mean_temp,
+      daily_mean_rh,
+      daily_sum_rain,
+      daily_mean_leaf_wetness,
+      dap,
+      site_id
+    )
 
   late_window <- daily_weather$dap >= 20 & daily_weather$dap <= 50
 
   dplyr::mutate(
     daily_weather,
-    rh = dplyr::if_else(late_window, pmin(100, pmax(35, rh + site_profile$rh_shift)), rh),
-    rain = dplyr::if_else(late_window, pmax(0, rain + site_profile$rain_shift), rain),
-    leaf_wetness = dplyr::if_else(
+    daily_mean_rh = dplyr::if_else(
       late_window,
-      pmin(1, pmax(0, leaf_wetness + site_profile$leaf_wetness_shift)),
-      leaf_wetness
+      pmin(100, pmax(35, daily_mean_rh + site_profile$rh_shift)),
+      daily_mean_rh
     ),
-    temp = dplyr::if_else(late_window, temp + site_profile$temp_shift, temp)
+    daily_sum_rain = dplyr::if_else(late_window, pmax(0, daily_sum_rain + site_profile$rain_shift), daily_sum_rain),
+    daily_mean_leaf_wetness = dplyr::if_else(
+      late_window,
+      pmin(1, pmax(0, daily_mean_leaf_wetness + site_profile$leaf_wetness_shift)),
+      daily_mean_leaf_wetness
+    ),
+    daily_mean_temp = dplyr::if_else(late_window, daily_mean_temp + site_profile$temp_shift, daily_mean_temp)
   )
 }
 
@@ -95,8 +107,18 @@ fda_weather_daily <- dplyr::bind_rows(lapply(1:80, function(i) {
   )
 }))
 
+fda_weather_for_assessment <- fda_weather_daily %>%
+  dplyr::transmute(
+    site_id,
+    time,
+    temp = daily_mean_temp,
+    rh = daily_mean_rh,
+    rain = daily_sum_rain,
+    leaf_wetness = daily_mean_leaf_wetness
+  )
+
 fda_assessments <- simulate_assessment_data(
-  weather = fda_weather_daily,
+  weather = fda_weather_for_assessment,
   id_col = "site_id",
   response_type = "binary",
   seed = 23,
@@ -112,7 +134,7 @@ fda_demo_data <- list(
   weather_daily = fda_weather_daily,
   assessments = fda_assessments,
   variable_specs = data.frame(
-    variable = c("temp", "rh", "rain", "leaf_wetness"),
+    variable = c("daily_mean_temp", "daily_mean_rh", "daily_sum_rain", "daily_mean_leaf_wetness"),
     label = c(
       "Mean air temperature (deg C)",
       "Relative humidity (%)",

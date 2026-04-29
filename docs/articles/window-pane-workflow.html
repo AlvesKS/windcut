@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">windcut</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,8 @@
     <li><h6 class="dropdown-header" data-toc-skip>Tutorials</h6></li>
     <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with windcut</a></li>
     <li><a class="dropdown-item" href="../articles/daily-weather-aggregation.html">Daily Weather Aggregation</a></li>
+    <li><a class="dropdown-item" href="../articles/biological-weather-summaries.html">Deriving biologically meaningful weather summaries</a></li>
+    <li><a class="dropdown-item" href="../articles/multivariable-favorability.html">Summarizing multivariable disease-favorable conditions</a></li>
     <li><a class="dropdown-item" href="../articles/window-pane-workflow.html">Window-Pane Workflow</a></li>
     <li><a class="dropdown-item" href="../articles/feature-screening.html">Feature Screening for Disease Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/functional-data-analysis.html">Functional Data Analysis for Weather Series</a></li>
@@ -650,7 +652,7 @@ calculation explicit.</p>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a></span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>summary_statistics <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="at">daily_mean_temp =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"min"</span>, <span class="st">"max"</span>),</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="at">daily_mean_rh =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">median =</span> <span class="st">"median"</span>, <span class="at">days_ge_90 =</span> <span class="fu">count_ge</span>(<span class="dv">90</span>)),</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="at">daily_mean_rh =</span> <span class="fu">list</span>(<span class="at">mean =</span> <span class="st">"mean"</span>, <span class="at">median =</span> <span class="st">"median"</span>, <span class="at">days_at_or_above_90 =</span> <span class="fu">count_at_or_above</span>(<span class="dv">90</span>)),</span>
 <span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="at">daily_sum_rain =</span> <span class="fu">c</span>(<span class="st">"sum"</span>, <span class="st">"max"</span>),</span>
 <span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="at">daily_sum_leaf_wetness =</span> <span class="st">"sum"</span></span>
 <span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>)</span>
@@ -719,7 +721,7 @@ calculation explicit.</p>
 <td align="left">daily_mean_rh_median_window_m49_m42</td>
 </tr>
 <tr class="even">
-<td align="left">daily_mean_rh_days_ge_90_window_m49_m42</td>
+<td align="left">daily_mean_rh_days_at_or_above_90_window_m49_m42</td>
 </tr>
 <tr class="odd">
 <td align="left">daily_sum_rain_sum_window_m49_m42</td>
@@ -748,13 +750,13 @@ weather predictor.</p>
 <col width="2%">
 <col width="4%">
 <col width="5%">
-<col width="6%">
-<col width="10%">
-<col width="10%">
+<col width="5%">
 <col width="10%">
 <col width="9%">
+<col width="9%">
+<col width="9%">
 <col width="10%">
-<col width="11%">
+<col width="13%">
 <col width="9%">
 <col width="9%">
 </colgroup>
@@ -768,7 +770,7 @@ weather predictor.</p>
 <th align="right">daily_mean_temp_max_window_m49_m42</th>
 <th align="right">daily_mean_rh_mean_window_m49_m42</th>
 <th align="right">daily_mean_rh_median_window_m49_m42</th>
-<th align="right">daily_mean_rh_days_ge_90_window_m49_m42</th>
+<th align="right">daily_mean_rh_days_at_or_above_90_window_m49_m42</th>
 <th align="right">daily_sum_rain_sum_window_m49_m42</th>
 <th align="right">daily_sum_rain_max_window_m49_m42</th>
 </tr></thead>

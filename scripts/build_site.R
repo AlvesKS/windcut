@@ -83,23 +83,22 @@ for (article_name in article_names) {
 asset_dir <- file.path("docs", "assets")
 dir.create(asset_dir, recursive = TRUE, showWarnings = FALSE)
 
-png(file.path(asset_dir, "home-window-pane.png"), width = 1200, height = 800, res = 150)
-windows <- windcut::make_windows(min_offset = -21, max_offset = -1, width = 5)
-plot(
-  NA,
-  xlim = range(c(0, windows$relative_start, windows$relative_end)),
-  ylim = c(1, min(18, nrow(windows))),
+png(file.path(asset_dir, "home-window-pane.png"), width = 1300, height = 900, res = 150)
+windows <- windcut::make_windows(min_offset = -21, max_offset = 0, width = 7, slide_by = 2)
+home_window_plot <- windcut::plot_window_pane(
+  windows,
+  max_windows = 12,
+  color_by = "none",
+  title = "Window-pane candidate grid",
+  subtitle = "Each segment is a candidate 7-day weather window before assessment",
   xlab = "Time relative to assessment (days)",
-  ylab = "Window candidate",
-  main = "Window-pane candidate grid",
-  yaxt = "n"
-)
-cols <- colorRampPalette(c("#dcebdc", "#3f7d58"))(min(18, nrow(windows)))
-for (i in seq_len(min(18, nrow(windows)))) {
-  segments(windows$relative_start[i], i, windows$relative_end[i], i, lwd = 5, col = cols[i])
-}
-axis(2, at = seq_len(min(18, nrow(windows))), labels = windows$label[seq_len(min(18, nrow(windows)))], las = 1, cex.axis = 0.7)
-box(col = "#b7cdbd")
+  ylab = NULL
+) +
+  ggplot2::theme(
+    axis.text.y = ggplot2::element_text(size = 9),
+    plot.margin = ggplot2::margin(10, 20, 10, 35)
+  )
+print(home_window_plot)
 dev.off()
 
 png(file.path(asset_dir, "home-functional-curves.png"), width = 1200, height = 800, res = 150)

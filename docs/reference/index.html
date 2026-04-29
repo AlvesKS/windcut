@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">windcut</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,8 @@
     <li><h6 class="dropdown-header" data-toc-skip>Tutorials</h6></li>
     <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with windcut</a></li>
     <li><a class="dropdown-item" href="../articles/daily-weather-aggregation.html">Daily Weather Aggregation</a></li>
+    <li><a class="dropdown-item" href="../articles/biological-weather-summaries.html">Deriving biologically meaningful weather summaries</a></li>
+    <li><a class="dropdown-item" href="../articles/multivariable-favorability.html">Summarizing multivariable disease-favorable conditions</a></li>
     <li><a class="dropdown-item" href="../articles/window-pane-workflow.html">Window-Pane Workflow</a></li>
     <li><a class="dropdown-item" href="../articles/feature-screening.html">Feature Screening for Disease Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/functional-data-analysis.html">Functional Data Analysis for Weather Series</a></li>
@@ -71,12 +73,6 @@
         <dd>Aggregate Weather Observations to Daily Data</dd>
       </dl><dl><dt>
 
-          <code><a href="count_ge.html">count_ge()</a></code>
-
-        </dt>
-        <dd>Count Values Greater Than or Equal to a Threshold</dd>
-      </dl><dl><dt>
-
           <code><a href="make_windows.html">make_windows()</a></code>
 
         </dt>
@@ -118,6 +114,92 @@
         </dt>
         <dd>Screen Pairwise Correlations Among Candidate Features</dd>
       </dl></div><div class="section level2">
+      <h2 id="summary-functions">Summary functions<a class="anchor" aria-label="anchor" href="#summary-functions"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="threshold_summary_functions.html">count_above()</a></code> <code><a href="threshold_summary_functions.html">count_at_or_above()</a></code> <code><a href="threshold_summary_functions.html">count_below()</a></code> <code><a href="threshold_summary_functions.html">count_at_or_below()</a></code> <code><a href="threshold_summary_functions.html">count_between()</a></code> <code><a href="threshold_summary_functions.html">proportion_above()</a></code> <code><a href="threshold_summary_functions.html">proportion_at_or_above()</a></code> <code><a href="threshold_summary_functions.html">proportion_below()</a></code> <code><a href="threshold_summary_functions.html">proportion_at_or_below()</a></code> <code><a href="threshold_summary_functions.html">proportion_between()</a></code>
+
+        </dt>
+        <dd>Threshold-based summary functions</dd>
+      </dl><dl><dt>
+
+          <code><a href="conditional_value_summary_functions.html">sum_above()</a></code> <code><a href="conditional_value_summary_functions.html">sum_at_or_above()</a></code> <code><a href="conditional_value_summary_functions.html">sum_below()</a></code> <code><a href="conditional_value_summary_functions.html">sum_between()</a></code> <code><a href="conditional_value_summary_functions.html">mean_above()</a></code> <code><a href="conditional_value_summary_functions.html">mean_at_or_above()</a></code> <code><a href="conditional_value_summary_functions.html">mean_below()</a></code> <code><a href="conditional_value_summary_functions.html">mean_between()</a></code>
+
+        </dt>
+        <dd>Conditional value summary functions</dd>
+      </dl><dl><dt>
+
+          <code><a href="thermal_time_functions.html">degree_hours_above()</a></code> <code><a href="thermal_time_functions.html">degree_hours_below()</a></code> <code><a href="thermal_time_functions.html">degree_days_above()</a></code> <code><a href="thermal_time_functions.html">degree_days_below()</a></code> <code><a href="thermal_time_functions.html">thermal_time_above()</a></code> <code><a href="thermal_time_functions.html">thermal_time_between()</a></code> <code><a href="thermal_time_functions.html">hours_in_temperature_range()</a></code> <code><a href="thermal_time_functions.html">proportion_in_temperature_range()</a></code>
+
+        </dt>
+        <dd>Thermal-time summary functions</dd>
+      </dl><dl><dt>
+
+          <code><a href="weather_specific_summary_functions.html">humid_hours()</a></code> <code><a href="weather_specific_summary_functions.html">dry_hours()</a></code> <code><a href="weather_specific_summary_functions.html">proportion_humid()</a></code> <code><a href="weather_specific_summary_functions.html">proportion_dry()</a></code> <code><a href="weather_specific_summary_functions.html">max_consecutive_humid_hours()</a></code> <code><a href="weather_specific_summary_functions.html">max_consecutive_dry_hours()</a></code> <code><a href="weather_specific_summary_functions.html">rainy_hours()</a></code> <code><a href="weather_specific_summary_functions.html">rainy_days()</a></code> <code><a href="weather_specific_summary_functions.html">rain_events()</a></code> <code><a href="weather_specific_summary_functions.html">rain_event_count()</a></code> <code><a href="weather_specific_summary_functions.html">max_rain_event()</a></code> <code><a href="weather_specific_summary_functions.html">mean_rain_event()</a></code> <code><a href="weather_specific_summary_functions.html">hours_since_last_rain()</a></code> <code><a href="weather_specific_summary_functions.html">days_since_last_rain()</a></code> <code><a href="weather_specific_summary_functions.html">wet_hours()</a></code> <code><a href="weather_specific_summary_functions.html">wet_days()</a></code> <code><a href="weather_specific_summary_functions.html">proportion_wet()</a></code> <code><a href="weather_specific_summary_functions.html">max_consecutive_wet_hours()</a></code> <code><a href="weather_specific_summary_functions.html">wet_spell_count()</a></code> <code><a href="weather_specific_summary_functions.html">mean_wet_spell_duration()</a></code> <code><a href="weather_specific_summary_functions.html">max_wet_spell_duration()</a></code>
+
+        </dt>
+        <dd>Weather-specific summary functions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="spell-functions">Spell functions<a class="anchor" aria-label="anchor" href="#spell-functions"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="spell_summary_functions.html">max_consecutive_above()</a></code> <code><a href="spell_summary_functions.html">max_consecutive_at_or_above()</a></code> <code><a href="spell_summary_functions.html">max_consecutive_below()</a></code> <code><a href="spell_summary_functions.html">max_consecutive_at_or_below()</a></code> <code><a href="spell_summary_functions.html">max_consecutive_between()</a></code> <code><a href="spell_summary_functions.html">spell_count_above()</a></code> <code><a href="spell_summary_functions.html">spell_count_at_or_above()</a></code> <code><a href="spell_summary_functions.html">spell_count_below()</a></code> <code><a href="spell_summary_functions.html">spell_count_between()</a></code> <code><a href="spell_summary_functions.html">mean_spell_duration_above()</a></code> <code><a href="spell_summary_functions.html">max_spell_duration_above()</a></code>
+
+        </dt>
+        <dd>Consecutive spell summary functions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="condition-functions">Condition functions<a class="anchor" aria-label="anchor" href="#condition-functions"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="multivariable_condition_summary_functions.html">count_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">proportion_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">sum_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">mean_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">max_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">min_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">max_consecutive_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">spell_count_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">mean_spell_duration_when()</a></code> <code><a href="multivariable_condition_summary_functions.html">max_spell_duration_when()</a></code>
+
+        </dt>
+        <dd>Multivariable condition summary functions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="weather-derivatives">Weather derivatives<a class="anchor" aria-label="anchor" href="#weather-derivatives"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="weather_derivative_functions.html">derive_dew_point()</a></code> <code><a href="weather_derivative_functions.html">derive_vpd()</a></code> <code><a href="weather_derivative_functions.html">derive_temperature_range()</a></code> <code><a href="weather_derivative_functions.html">derive_leaf_wetness_from_rh()</a></code> <code><a href="weather_derivative_functions.html">derive_leaf_wetness_from_rh_temp()</a></code> <code><a href="weather_derivative_functions.html">derive_favorable_condition()</a></code>
+
+        </dt>
+        <dd>Derive meteorological variables</dd>
+      </dl></div><div class="section level2">
       <h2 id="simulation">Simulation<a class="anchor" aria-label="anchor" href="#simulation"></a></h2>
 
 
@@ -136,13 +218,13 @@
         <dd>Example Weather Data</dd>
       </dl><dl><dt>
 
-
+          <code><a href="window_pane_demo_data.html">window_pane_demo_data</a></code>
 
         </dt>
         <dd>Demo Data for Window-Pane Workflows</dd>
       </dl><dl><dt>
 
-
+          <code><a href="fda_demo_data.html">fda_demo_data</a></code>
 
         </dt>
         <dd>Demo Data for Functional Data Analysis Workflows</dd>

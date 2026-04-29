@@ -8,3 +8,12 @@
 ^teststhat$
 ^vignettes/.*\.knit\.md$
 ^vignettes/pandoc.*\.html$
+^_pkgdown\.yml$
+^docs$
+^index\.md$
+^logo\.png$
+^pkgdown$
+^scripts$
+^windcut\.Rproj$
+^articles$
+^windcut_.*[.]tar[.]gz$
