@@ -39,6 +39,15 @@ correction, then reduce highly correlated predictors before downstream modeling.
 3. Use the feature-screening tutorial to prioritize windows before fitting predictive models.
 4. Explore the FDA tutorial when you want to work with entire weather trajectories instead of pre-cut windows.
 
+## Installation
+
+Install the development version from GitHub:
+
+```r
+install.packages("pak")
+pak::pak("AlvesKS/windcut")
+```
+
 ## Quick start
 
 The quick start uses the bundled demo dataset. It loads daily weather and one
